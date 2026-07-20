@@ -189,7 +189,37 @@ SyncQueue (local only)
 - Tag known-good states before the deadline: `v1-demo-ready`, incrementing as needed
 - `PROVIDER_SWITCHING.md` documents the one-variable AI provider switch for judges/organizers
 
-## 9. Risks & Architectural Mitigations
+## 9. Architecture Decision Records
+
+These decisions resolve gaps and open questions left in earlier drafts of this document. They are binding; `plan/` is written against them.
+
+### ADR-1: Backend data store is Convex
+
+Section 3/4.5 left the sync backend as "e.g. Convex/Postgres." Decided: **Convex**. Rationale: TypeScript-native schema/functions, no separate ORM/migration tooling, realtime queries available if a later feature needs them, fastest path to a working `/api/sync` target inside a 4-day build. Next.js API routes remain the only thing the browser talks to (§4.2 unchanged) — they call Convex server-side via `fetchQuery`/`fetchMutation`/`fetchAction` (`convex/nextjs`) or `ConvexHttpClient`, using `NEXT_PUBLIC_CONVEX_URL`. The browser never imports a Convex client directly; this preserves the existing secret/trust boundary in §7.
+
+### ADR-2: Local PIN lock, not a server-verified account
+
+§5 ("Account & Access") specified "Phone number + PIN login" without a corresponding data model entry, and no auth flow appears in §5's key flows. Decided: this is a **device-level app lock**, not server authentication. The PIN is set and verified entirely client-side (hashed, stored in IndexedDB); there is no login network call and no server session. A `shopId` (UUID, generated on first launch and persisted locally) is the tenant key every synced record carries — it is the sole mechanism that scopes Convex reads/writes to "this shop's data," not a cryptographic identity. This matches the PRD's single-shop/single-user scope and removes an entire auth-backend phase from the timeline.
+
+**DEBT(prudent-deliberate):** `shopId` is an unguessable UUID, not an authenticated credential — anyone who obtains it could read/write that shop's synced data. Acceptable for a single-device hackathon MVP where the UUID never leaves the device or the direct Convex calls. Remediation path (post-hackathon): move to ADR-2's rejected alternative (server-verified phone+PIN sessions) before any multi-device or multi-tenant exposure.
+
+### ADR-3: How the client learns a pending M-Pesa payment completed (missing flow, §5.3)
+
+§5.3 stated the webhook marks the transaction completed and stock is deducted, but never specified how the client — whose local IndexedDB is the source of truth for stock — learns this happened, since a server-side webhook cannot write into a specific browser's IndexedDB. Decided: while the "waiting for payment" screen is open, the client polls `GET /api/checkout/status?reference=` (a Next.js route, not a direct Convex client call) every 3s for up to 90s. That route runs `fetchQuery` against Convex for the transaction's current status. The webhook handler (`/api/webhooks/paystack`) is what actually calls the Convex mutation that flips status to `completed` and decrements stock. Once the poll observes `completed`, the client applies the same stock decrement to its local Dexie tables and marks the local transaction `completed`. If the poll window elapses without confirmation, the transaction stays `pending` and is reconciled on the next `/api/sync` pass. No Convex client SDK is added to the frontend bundle; the browser's only server contact remains Next.js API routes.
+
+### ADR-4: Service worker via Serwist, not next-pwa
+
+§4.1 said "Service Worker" without naming a library. `next-pwa` is unmaintained; **Serwist** (`@serwist/next`) is its actively maintained successor and the option Next.js's own docs point to for App Router. Use it for app-shell precaching.
+
+### ADR-5: Dexie reactivity via `dexie-react-hooks`
+
+UI components read local data with `useLiveQuery` (`dexie-react-hooks`, ^1.1.3+), which re-renders on any Dexie-level write (including from a service worker or another tab) and is SSR-safe in Next.js App Router (falls back to the query's initial value on the server, resolves client-side).
+
+### ADR-6: Locale strategy is cookie-based, not URL-prefixed
+
+§4.1 named `next-intl` without specifying routing. Decided: `localePrefix: 'never'` — a `[locale]` route segment still exists (required by next-intl), but the URL never shows it; the active locale is read from a cookie and switched via an in-app toggle, not a route change. Matches the PRD's "English/Swahili UI toggle" (a button, not separate URLs) for a single-shop app with no SEO requirement.
+
+## 10. Risks & Architectural Mitigations
 
 | Risk | Mitigation |
 |---|---|

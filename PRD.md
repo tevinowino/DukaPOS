@@ -73,6 +73,7 @@ A small shop owner or single employee in Nairobi (or similar urban/peri-urban co
 
 ### Account & Access
 - Phone number + PIN login
+- Implemented as a local device app lock (PIN set/verified on-device, no server-side account or session) — see ARCHITECTURE.md ADR-2. Phone number is collected as shop profile info, not a login credential.
 
 ## 6. Non-Functional Requirements
 
