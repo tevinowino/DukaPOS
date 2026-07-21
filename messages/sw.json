@@ -1,7 +1,8 @@
 {
   "shell": {
     "appName": "DukaPOS",
-    "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako"
+    "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako",
+    "viewStockButton": "Angalia bidhaa"
   },
   "onboarding": {
     "title": "Weka duka lako",
@@ -18,5 +19,45 @@
   "lock": {
     "title": "Weka PIN yako",
     "incorrectPin": "PIN sio sahihi — jaribu tena"
+  },
+  "scanner": {
+    "starting": "Inaanzisha kamera…",
+    "permissionDenied": "Ufikiaji wa kamera ulikataliwa. Bado unaweza kuongeza bidhaa hii mwenyewe.",
+    "enterManually": "Weka mwenyewe",
+    "enterManuallyInstead": "Weka mwenyewe badala yake"
+  },
+  "products": {
+    "title": "Bidhaa",
+    "backToHome": "← Nyumbani",
+    "backToStock": "← Rudi kwenye bidhaa",
+    "addButton": "Ongeza bidhaa",
+    "emptyTitle": "Hakuna bidhaa bado",
+    "emptyBody": "Ongeza bidhaa yako ya kwanza ili kuanza.",
+    "inStock": "{count} zipo stokini",
+    "outOfStock": "Hazipo stokini",
+    "newTitle": "Ongeza bidhaa",
+    "scanBarcodeButton": "Changanua barcode",
+    "addManuallyButton": "Ongeza mwenyewe",
+    "duplicateFoundBody": "Barcode hii tayari ni {name} — ungependa kuihariri?",
+    "duplicateFoundEditButton": "Hariri {name}",
+    "scanAgainButton": "Changanua tena",
+    "editTitle": "Hariri bidhaa",
+    "deleteButton": "Futa bidhaa",
+    "deleteConfirmBody": "Hatua hii haiwezi kutenduliwa.",
+    "deleteConfirmButton": "Ndiyo, futa",
+    "cancelButton": "Ghairi"
+  },
+  "productForm": {
+    "nameLabel": "Jina la bidhaa",
+    "categoryLabel": "Aina",
+    "barcodeLabel": "Barcode (si lazima)",
+    "priceLabel": "Bei (KES)",
+    "stockLabel": "Idadi stokini",
+    "nameRequired": "Weka jina la bidhaa",
+    "priceInvalid": "Weka bei sahihi (KES nzima, 0 au zaidi)",
+    "stockInvalid": "Weka idadi sahihi (nambari nzima, 0 au zaidi)",
+    "barcodeInvalid": "Barcode inapaswa kuwa nambari pekee",
+    "saveButton": "Hifadhi bidhaa",
+    "saveChangesButton": "Hifadhi mabadiliko"
   }
 }

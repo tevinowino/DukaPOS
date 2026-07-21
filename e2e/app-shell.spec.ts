@@ -12,14 +12,14 @@ test("app shell loads and registers a service worker", async ({ page }) => {
   // @serwist/next's plugin is webpack-only (see package.json's `--webpack`
   // flag and this phase's overview.md "Deviations" — Next 16 defaults to
   // Turbopack, which silently skips the service-worker build step).
-  await page.waitForFunction(async () => {
-    const registration = await navigator.serviceWorker.getRegistration();
-    return registration?.active?.state === "activated";
-  });
-
-  const activeState = await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.getRegistration();
-    return reg?.active?.state;
-  });
-  expect(activeState).toBe("activated");
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const registration = await navigator.serviceWorker.getRegistration();
+          return registration?.active?.state;
+        }),
+      { timeout: 15_000 },
+    )
+    .toBe("activated");
 });

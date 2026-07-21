@@ -1,7 +1,8 @@
 {
   "shell": {
     "appName": "DukaPOS",
-    "tagline": "Track stock and sales from your phone"
+    "tagline": "Track stock and sales from your phone",
+    "viewStockButton": "View stock"
   },
   "onboarding": {
     "title": "Set up your shop",
@@ -18,5 +19,45 @@
   "lock": {
     "title": "Enter your PIN",
     "incorrectPin": "Incorrect PIN — try again"
+  },
+  "scanner": {
+    "starting": "Starting camera…",
+    "permissionDenied": "Camera access was denied. You can still add this product manually.",
+    "enterManually": "Enter manually",
+    "enterManuallyInstead": "Enter manually instead"
+  },
+  "products": {
+    "title": "Stock",
+    "backToHome": "← Home",
+    "backToStock": "← Back to stock",
+    "addButton": "Add product",
+    "emptyTitle": "No products yet",
+    "emptyBody": "Add your first product to get started.",
+    "inStock": "{count} in stock",
+    "outOfStock": "Out of stock",
+    "newTitle": "Add product",
+    "scanBarcodeButton": "Scan barcode",
+    "addManuallyButton": "Add manually",
+    "duplicateFoundBody": "This barcode is already {name} — edit it?",
+    "duplicateFoundEditButton": "Edit {name}",
+    "scanAgainButton": "Scan again",
+    "editTitle": "Edit product",
+    "deleteButton": "Delete product",
+    "deleteConfirmBody": "This can't be undone.",
+    "deleteConfirmButton": "Yes, delete",
+    "cancelButton": "Cancel"
+  },
+  "productForm": {
+    "nameLabel": "Product name",
+    "categoryLabel": "Category",
+    "barcodeLabel": "Barcode (optional)",
+    "priceLabel": "Price (KES)",
+    "stockLabel": "Stock quantity",
+    "nameRequired": "Enter a product name",
+    "priceInvalid": "Enter a valid price (whole KES, 0 or more)",
+    "stockInvalid": "Enter a valid stock quantity (whole number, 0 or more)",
+    "barcodeInvalid": "Barcode should be numbers only",
+    "saveButton": "Save product",
+    "saveChangesButton": "Save changes"
   }
 }

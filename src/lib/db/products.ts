@@ -32,3 +32,17 @@ export async function deleteProduct(id: string): Promise<void> {
 export async function listProducts(): Promise<Product[]> {
   return db.products.toArray();
 }
+
+/** Returns a single product by id, or `undefined` if it doesn't exist. */
+export async function getProduct(id: string): Promise<Product | undefined> {
+  return db.products.get(id);
+}
+
+/**
+ * Looks up a product by its barcode. Used by the scan flow to detect
+ * "this barcode is already saved — edit it?" rather than creating a
+ * duplicate. Returns `undefined` if no product has this barcode.
+ */
+export async function getProductByBarcode(barcode: string): Promise<Product | undefined> {
+  return db.products.where("barcode").equals(barcode).first();
+}

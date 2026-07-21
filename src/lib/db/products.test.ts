@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./schema";
-import { addProduct, deleteProduct, listProducts, updateProduct } from "./products";
+import {
+  addProduct,
+  deleteProduct,
+  getProductByBarcode,
+  listProducts,
+  updateProduct,
+} from "./products";
 
 describe("products", () => {
   beforeEach(async () => {
@@ -85,5 +91,22 @@ describe("products", () => {
     const all = await listProducts();
     expect(all).toHaveLength(2);
     expect(all.map((p) => p.id).sort()).toEqual([first.id, second.id].sort());
+  });
+
+  it("getProductByBarcode returns the matching product", async () => {
+    const saved = await addProduct({
+      name: "Cooking Fat 500g",
+      category: "Groceries",
+      barcode: "6009123456789",
+      priceKES: 180,
+      stockQty: 12,
+      source: "barcode",
+    });
+
+    expect(await getProductByBarcode("6009123456789")).toEqual(saved);
+  });
+
+  it("getProductByBarcode returns undefined for a barcode nothing was saved with", async () => {
+    expect(await getProductByBarcode("0000000000000")).toBeUndefined();
   });
 });

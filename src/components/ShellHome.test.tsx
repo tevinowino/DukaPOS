@@ -12,6 +12,7 @@ describe("ShellHome", () => {
           shell: {
             appName: "DukaPOS",
             tagline: "Track stock and sales from your phone",
+            viewStockButton: "View stock",
           },
         }}
       >

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 /**
@@ -12,12 +13,17 @@ import { useTranslations } from "next-intl";
  */
 export function ShellHome() {
   const t = useTranslations("shell");
-  
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
+    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <h1 className="text-3xl font-semibold tracking-tight">{t("appName")}</h1>
       <p className="text-base text-zinc-600 dark:text-zinc-400">{t("tagline")}</p>
+      <Link
+        href="/products"
+        className="mt-4 rounded bg-zinc-900 px-6 py-3 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+      >
+        {t("viewStockButton")}
+      </Link>
     </main>
   );
 }
