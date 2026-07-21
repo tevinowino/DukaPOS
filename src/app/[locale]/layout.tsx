@@ -4,6 +4,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import { routing } from "@/i18n/routing";
+import { AppLockGate } from "@/components/AppLockGate";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -42,7 +43,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <AppLockGate>{children}</AppLockGate>
         </NextIntlClientProvider>
       </body>
     </html>

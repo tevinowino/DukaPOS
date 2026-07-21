@@ -2,5 +2,21 @@
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Track stock and sales from your phone"
+  },
+  "onboarding": {
+    "title": "Set up your shop",
+    "shopNameLabel": "Shop name",
+    "phoneLabel": "Phone number",
+    "shopNameRequired": "Enter your shop name",
+    "invalidPhone": "Enter a valid Kenyan phone number",
+    "continueButton": "Continue",
+    "setPinTitle": "Choose a 4-digit PIN",
+    "pinMismatch": "PINs didn't match — try again",
+    "confirmPinTitle": "Confirm your PIN",
+    "saving": "Setting up your shop…"
+  },
+  "lock": {
+    "title": "Enter your PIN",
+    "incorrectPin": "Incorrect PIN — try again"
   }
 }

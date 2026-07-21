@@ -52,10 +52,27 @@ export interface SyncQueueEntry {
   syncedAt?: number;
 }
 
+/**
+ * The single row describing this device's shop (ADR-2: a local device app
+ * lock, not a server account). `shopId` is generated once, in
+ * `createShopProfile` (`src/lib/identity/shopIdentity.ts`), and is the
+ * tenant key every synced record will carry from Phase 5 onward.
+ */
+export interface ShopProfile {
+  shopId: string;
+  shopName: string;
+  /** Canonical E.164 form, e.g. "+254712345678" — see normalizePhone. */
+  phoneE164: string;
+  pinHash: string;
+  pinSalt: string;
+  createdAt: number;
+}
+
 class DukaDB extends Dexie {
   products!: EntityTable<Product, "id">;
   transactions!: EntityTable<Transaction, "id">;
   syncQueue!: EntityTable<SyncQueueEntry, "id">;
+  shopProfile!: EntityTable<ShopProfile, "shopId">;
 
   constructor() {
     super("DukaDB");
@@ -63,6 +80,11 @@ class DukaDB extends Dexie {
       products: "id, barcode, category",
       transactions: "id, productId, status, createdAt",
       syncQueue: "id, syncedAt",
+    });
+    // Added in Phase 2. Do not edit the version(1) block above — Dexie
+    // migrates existing installs forward by chaining version blocks.
+    this.version(2).stores({
+      shopProfile: "shopId",
     });
   }
 }

@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
  */
 export function ShellHome() {
   const t = useTranslations("shell");
+  
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">

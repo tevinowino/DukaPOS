@@ -2,5 +2,21 @@
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako"
+  },
+  "onboarding": {
+    "title": "Weka duka lako",
+    "shopNameLabel": "Jina la duka",
+    "phoneLabel": "Namba ya simu",
+    "shopNameRequired": "Weka jina la duka lako",
+    "invalidPhone": "Weka namba sahihi ya simu ya Kenya",
+    "continueButton": "Endelea",
+    "setPinTitle": "Chagua PIN ya tarakimu 4",
+    "pinMismatch": "PIN hazifanani — jaribu tena",
+    "confirmPinTitle": "Thibitisha PIN yako",
+    "saving": "Inaweka duka lako…"
+  },
+  "lock": {
+    "title": "Weka PIN yako",
+    "incorrectPin": "PIN sio sahihi — jaribu tena"
   }
 }
