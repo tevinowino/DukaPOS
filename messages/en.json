@@ -39,6 +39,7 @@
     "outOfStock": "Out of stock",
     "newTitle": "Add product",
     "scanBarcodeButton": "Scan barcode",
+    "addViaPhotoButton": "Add via photo",
     "addManuallyButton": "Add manually",
     "duplicateFoundBody": "This barcode is already {name} — edit it?",
     "duplicateFoundEditButton": "Edit {name}",
@@ -89,5 +90,16 @@
     "lastSynced": "Last synced at {time}",
     "idle": "Up to date",
     "syncNowButton": "Sync now"
+  },
+  "photoCapture": {
+    "takePhotoLabel": "Take a photo of the product"
+  },
+  "photoProduct": {
+    "title": "Add via photo",
+    "backToAddProduct": "← Back",
+    "identifying": "Identifying product…",
+    "confirmTitle": "Confirm the details",
+    "offlineMessage": "AI identification needs a connection — add manually, or we'll try again once you're back online",
+    "identifyFailedMessage": "Couldn't identify this — add manually"
   }
 }

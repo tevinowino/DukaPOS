@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@google/genai": "^2.12.0",
     "@serwist/next": "^9.5.11",
     "@zxing/browser": "^0.2.1",
     "convex": "^1.42.3",

@@ -39,6 +39,7 @@
     "outOfStock": "Hazipo stokini",
     "newTitle": "Ongeza bidhaa",
     "scanBarcodeButton": "Changanua barcode",
+    "addViaPhotoButton": "Ongeza kwa picha",
     "addManuallyButton": "Ongeza mwenyewe",
     "duplicateFoundBody": "Barcode hii tayari ni {name} — ungependa kuihariri?",
     "duplicateFoundEditButton": "Hariri {name}",
@@ -89,5 +90,16 @@
     "lastSynced": "Ilisawazishwa mara ya mwisho saa {time}",
     "idle": "Yamesasishwa",
     "syncNowButton": "Sawazisha sasa"
+  },
+  "photoCapture": {
+    "takePhotoLabel": "Piga picha ya bidhaa"
+  },
+  "photoProduct": {
+    "title": "Ongeza kwa picha",
+    "backToAddProduct": "← Rudi",
+    "identifying": "Inatambua bidhaa…",
+    "confirmTitle": "Thibitisha maelezo",
+    "offlineMessage": "Utambuzi wa AI unahitaji mtandao — ongeza mwenyewe, au tutajaribu tena ukiwa mtandaoni tena",
+    "identifyFailedMessage": "Imeshindikana kutambua — ongeza mwenyewe"
   }
 }

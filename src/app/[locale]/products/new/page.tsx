@@ -44,6 +44,12 @@ export default function NewProductPage() {
         >
           {t("scanBarcodeButton")}
         </button>
+        <Link
+          href="/products/new/photo"
+          className="w-full max-w-sm rounded border py-3 text-center text-base font-medium"
+        >
+          {t("addViaPhotoButton")}
+        </Link>
         <button
           type="button"
           onClick={() => setView({ step: "form" })}
