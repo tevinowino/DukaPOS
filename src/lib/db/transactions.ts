@@ -1,4 +1,6 @@
 import { db, type Transaction } from "./schema";
+import { updateProduct } from "./products";
+import { enqueue } from "../sync/queue";
 
 export interface SaleLineItem {
   productId: string;
@@ -11,15 +13,17 @@ export interface SaleLineItem {
  * sale; Phase 8's M-Pesa webhook-completion path mirrors this exact
  * clamp-at-zero logic in a Convex mutation (it cannot import this
  * Dexie-bound function, since Convex functions run server-side with no
- * access to the browser's IndexedDB — see this phase's overview.md).
- * No-ops if the product no longer exists.
+ * access to the browser's IndexedDB — see Phase 5's overview.md).
+ * No-ops if the product no longer exists. Goes through `updateProduct`
+ * (not a raw `db.products.update`) so the stock change also gets enqueued
+ * for sync, same as any other product edit.
  */
 export async function deductStock(productId: string, quantity: number): Promise<void> {
   const product = await db.products.get(productId);
   if (!product) {
     return;
   }
-  await db.products.update(productId, { stockQty: Math.max(0, product.stockQty - quantity) });
+  await updateProduct(productId, { stockQty: Math.max(0, product.stockQty - quantity) });
 }
 
 /**
@@ -54,6 +58,7 @@ export async function recordCashSale(items: SaleLineItem[]): Promise<Transaction
       saleGroupId,
     };
     await db.transactions.add(transaction);
+    await enqueue({ type: "transaction", payload: transaction });
     recorded.push(transaction);
   }
 

@@ -1,4 +1,5 @@
 import { db, type Product } from "./schema";
+import { enqueue } from "../sync/queue";
 
 /**
  * Persists a new product, assigning its `id`. Does not enforce barcode
@@ -9,6 +10,7 @@ import { db, type Product } from "./schema";
 export async function addProduct(input: Omit<Product, "id">): Promise<Product> {
   const product: Product = { id: crypto.randomUUID(), ...input };
   await db.products.add(product);
+  await enqueue({ type: "product", payload: product });
   return product;
 }
 
@@ -21,9 +23,21 @@ export async function updateProduct(
   changes: Partial<Omit<Product, "id">>,
 ): Promise<void> {
   await db.products.update(id, changes);
+  const updated = await db.products.get(id);
+  if (updated) {
+    await enqueue({ type: "product", payload: updated });
+  }
 }
 
-/** Removes a product. Existing `Transaction` rows keep their own snapshot of product info and are unaffected. */
+/**
+ * Removes a product locally. Existing `Transaction` rows keep their own
+ * snapshot of product info and are unaffected.
+ *
+ * Deletion does not propagate to Convex in this phase — there is no
+ * delete-sync entry type or Convex delete mutation yet (out of Phase 5's
+ * scope; see its overview.md "Known Debt"). A product removed on-device
+ * stays in the synced backend copy.
+ */
 export async function deleteProduct(id: string): Promise<void> {
   await db.products.delete(id);
 }

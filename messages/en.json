@@ -81,5 +81,13 @@
     "prevDay": "← Previous",
     "nextDay": "Next →",
     "emptyState": "No sales recorded for this day."
+  },
+  "sync": {
+    "offline": "Offline — changes will sync when you're back online",
+    "syncing": "Syncing…",
+    "failed": "Sync failed — will retry",
+    "lastSynced": "Last synced at {time}",
+    "idle": "Up to date",
+    "syncNowButton": "Sync now"
   }
 }

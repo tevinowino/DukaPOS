@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getShopProfile } from "@/lib/identity/shopIdentity";
 import { LockScreen } from "./LockScreen";
 import { OnboardingScreen } from "./OnboardingScreen";
+import { SyncStatusBar } from "./SyncStatusBar";
 
 type GateStatus = "loading" | "needsOnboarding" | "locked" | "unlocked";
 
@@ -42,5 +43,10 @@ export function AppLockGate({ children }: { children: React.ReactNode }) {
   if (status === "locked") {
     return <LockScreen onUnlock={() => setStatus("unlocked")} />;
   }
-  return <>{children}</>;
+  return (
+    <>
+      <SyncStatusBar />
+      {children}
+    </>
+  );
 }

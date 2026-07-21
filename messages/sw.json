@@ -81,5 +81,13 @@
     "prevDay": "← Siku iliyopita",
     "nextDay": "Siku inayofuata →",
     "emptyState": "Hakuna mauzo yaliyorekodiwa kwa siku hii."
+  },
+  "sync": {
+    "offline": "Haiko mtandaoni — mabadiliko yatasawazishwa ukiwa mtandaoni tena",
+    "syncing": "Inasawazisha…",
+    "failed": "Usawazishaji umeshindikana — itajaribu tena",
+    "lastSynced": "Ilisawazishwa mara ya mwisho saa {time}",
+    "idle": "Yamesasishwa",
+    "syncNowButton": "Sawazisha sasa"
   }
 }
