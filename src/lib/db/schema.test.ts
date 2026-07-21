@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
 import { describe, expect, it } from "vitest";
-import { db, type Product, type ShopProfile } from "./schema";
+import { db, type Product, type ShopProfile, type Transaction } from "./schema";
 
 describe("db singleton", () => {
   it("returns the same instance across imports", async () => {
@@ -68,6 +68,72 @@ describe("version(2) migration", () => {
       },
     ]);
     expect(await upgraded.shopProfile.toArray()).toEqual([]);
+
+    upgraded.close();
+  });
+});
+
+describe("version(3) migration", () => {
+  it("preserves existing version(2) transaction rows after indexing saleGroupId", async () => {
+    const dbName = `DukaDB-migration-v3-test-${crypto.randomUUID()}`;
+
+    class PreV3DB extends Dexie {
+      transactions!: EntityTable<Transaction, "id">;
+      constructor(name: string) {
+        super(name);
+        this.version(1).stores({
+          products: "id, barcode, category",
+          transactions: "id, productId, status, createdAt",
+          syncQueue: "id, syncedAt",
+        });
+        this.version(2).stores({ shopProfile: "shopId" });
+      }
+    }
+    const preV3 = new PreV3DB(dbName);
+    await preV3.transactions.add({
+      id: "legacy-txn-1",
+      productId: "legacy-product-1",
+      productName: "Legacy Product",
+      quantity: 2,
+      totalKES: 200,
+      paymentMethod: "cash",
+      status: "completed",
+      createdAt: Date.now(),
+      saleGroupId: "legacy-sale-1",
+    });
+    preV3.close();
+
+    class UpgradedDB extends Dexie {
+      transactions!: EntityTable<Transaction, "id">;
+      constructor(name: string) {
+        super(name);
+        this.version(1).stores({
+          products: "id, barcode, category",
+          transactions: "id, productId, status, createdAt",
+          syncQueue: "id, syncedAt",
+        });
+        this.version(2).stores({ shopProfile: "shopId" });
+        this.version(3).stores({
+          transactions: "id, productId, status, createdAt, saleGroupId",
+        });
+      }
+    }
+    const upgraded = new UpgradedDB(dbName);
+
+    const rows = await upgraded.transactions.where("saleGroupId").equals("legacy-sale-1").toArray();
+    expect(rows).toEqual([
+      {
+        id: "legacy-txn-1",
+        productId: "legacy-product-1",
+        productName: "Legacy Product",
+        quantity: 2,
+        totalKES: 200,
+        paymentMethod: "cash",
+        status: "completed",
+        createdAt: rows[0]?.createdAt,
+        saleGroupId: "legacy-sale-1",
+      },
+    ]);
 
     upgraded.close();
   });

@@ -2,7 +2,9 @@
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Track stock and sales from your phone",
-    "viewStockButton": "View stock"
+    "newSaleButton": "New sale",
+    "viewStockButton": "View stock",
+    "viewSalesButton": "Sales log"
   },
   "onboarding": {
     "title": "Set up your shop",
@@ -59,5 +61,25 @@
     "barcodeInvalid": "Barcode should be numbers only",
     "saveButton": "Save product",
     "saveChangesButton": "Save changes"
+  },
+  "sell": {
+    "title": "New sale",
+    "backToHome": "← Home",
+    "addProductButton": "Add product",
+    "searchPlaceholder": "Search products…",
+    "quantityLabel": "Quantity for {name}",
+    "removeButton": "Remove",
+    "lowStockWarning": "Only {count} left",
+    "totalLabel": "Total: KES {total}",
+    "paymentCash": "Cash",
+    "paymentMpesaComingSoon": "M-Pesa (coming soon)",
+    "confirmButton": "Confirm sale"
+  },
+  "transactions": {
+    "title": "Sales",
+    "backToHome": "← Home",
+    "prevDay": "← Previous",
+    "nextDay": "Next →",
+    "emptyState": "No sales recorded for this day."
   }
 }

@@ -2,7 +2,9 @@
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako",
-    "viewStockButton": "Angalia bidhaa"
+    "newSaleButton": "Uuzaji mpya",
+    "viewStockButton": "Angalia bidhaa",
+    "viewSalesButton": "Rekodi za mauzo"
   },
   "onboarding": {
     "title": "Weka duka lako",
@@ -59,5 +61,25 @@
     "barcodeInvalid": "Barcode inapaswa kuwa nambari pekee",
     "saveButton": "Hifadhi bidhaa",
     "saveChangesButton": "Hifadhi mabadiliko"
+  },
+  "sell": {
+    "title": "Uuzaji mpya",
+    "backToHome": "← Nyumbani",
+    "addProductButton": "Ongeza bidhaa",
+    "searchPlaceholder": "Tafuta bidhaa…",
+    "quantityLabel": "Idadi ya {name}",
+    "removeButton": "Ondoa",
+    "lowStockWarning": "Zimebaki {count} pekee",
+    "totalLabel": "Jumla: KES {total}",
+    "paymentCash": "Taslimu",
+    "paymentMpesaComingSoon": "M-Pesa (inakuja hivi karibuni)",
+    "confirmButton": "Thibitisha uuzaji"
+  },
+  "transactions": {
+    "title": "Mauzo",
+    "backToHome": "← Nyumbani",
+    "prevDay": "← Siku iliyopita",
+    "nextDay": "Siku inayofuata →",
+    "emptyState": "Hakuna mauzo yaliyorekodiwa kwa siku hii."
   }
 }

@@ -25,10 +25,20 @@ export interface Product {
  * One product line of a sale. `status` starts at `'completed'` for cash
  * sales (settled instantly) or `'pending'` for M-Pesa sales awaiting the
  * Paystack webhook (Phase 8).
+ *
+ * OVERRIDE (Phase 4, ARCHITECTURE.md §4.5's `Transaction` shape didn't
+ * anticipate multi-item sales explicitly, but PRD §5 says "select
+ * item(s)"): one row per product line, not per sale. `saleGroupId` shares
+ * a value across every line of the same sale so the daily log can group
+ * them; `productName` snapshots the product's name at sale time so
+ * deleting the product later doesn't break history (see Phase 3's edge
+ * case on deletion).
  */
 export interface Transaction {
   id: string;
   productId: string;
+  /** Snapshot at sale time — survives the product itself being deleted. */
+  productName: string;
   quantity: number;
   /** Whole Kenyan Shillings — integer. */
   totalKES: number;
@@ -36,6 +46,8 @@ export interface Transaction {
   status: "completed" | "pending" | "failed";
   /** Epoch milliseconds. */
   createdAt: number;
+  /** Groups every line of one multi-item sale together. */
+  saleGroupId: string;
 }
 
 /**
@@ -85,6 +97,11 @@ class DukaDB extends Dexie {
     // migrates existing installs forward by chaining version blocks.
     this.version(2).stores({
       shopProfile: "shopId",
+    });
+    // Added in Phase 4: indexes `saleGroupId` for the transactions log's
+    // per-sale grouping. `productName` needs no index (never queried by).
+    this.version(3).stores({
+      transactions: "id, productId, status, createdAt, saleGroupId",
     });
   }
 }

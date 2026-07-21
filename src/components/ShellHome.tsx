@@ -18,12 +18,20 @@ export function ShellHome() {
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <h1 className="text-3xl font-semibold tracking-tight">{t("appName")}</h1>
       <p className="text-base text-zinc-600 dark:text-zinc-400">{t("tagline")}</p>
-      <Link
-        href="/products"
-        className="mt-4 rounded bg-zinc-900 px-6 py-3 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-      >
-        {t("viewStockButton")}
-      </Link>
+      <div className="mt-4 flex w-full max-w-sm flex-col gap-3">
+        <Link
+          href="/sell"
+          className="rounded bg-zinc-900 px-6 py-3 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          {t("newSaleButton")}
+        </Link>
+        <Link href="/products" className="rounded border px-6 py-3 text-base font-medium">
+          {t("viewStockButton")}
+        </Link>
+        <Link href="/transactions" className="rounded border px-6 py-3 text-base font-medium">
+          {t("viewSalesButton")}
+        </Link>
+      </div>
     </main>
   );
 }
