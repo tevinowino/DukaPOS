@@ -1,4 +1,15 @@
 {
+  "localeToggle": {
+    "english": "EN",
+    "swahili": "SW"
+  },
+  "pinPad": {
+    "digitsEntered": "{entered} of {length} digits entered",
+    "backspace": "Backspace"
+  },
+  "offlineIndicator": {
+    "offlineBadge": "You're offline — changes are saved on this device"
+  },
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Track stock and sales from your phone",
@@ -114,6 +125,7 @@
     "parseButton": "Parse update",
     "parsing": "Reading your update…",
     "parseFailedMessage": "Couldn't read that — try rephrasing it",
+    "offlineMessage": "Reading updates needs a connection — we'll try again once you're back online",
     "unmatchedProduct": "Couldn't match this to an existing product — add it first, or remove this line.",
     "addProductLink": "Add product",
     "quantityLabel": "Quantity for {name}",
@@ -129,7 +141,8 @@
     "generateButton": "Generate summary",
     "regenerateButton": "Regenerate",
     "generating": "Generating summary…",
-    "errorMessage": "Couldn't generate a summary right now — try again"
+    "errorMessage": "Couldn't generate a summary right now — try again",
+    "offlineMessage": "Summaries need a connection — we'll try again once you're back online"
   },
   "mpesaCheckout": {
     "title": "Pay with M-Pesa",

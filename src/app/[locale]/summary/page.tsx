@@ -4,16 +4,24 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { listTransactions } from "@/lib/db/transactions";
+import { useOnlineSync } from "@/lib/sync/useOnlineSync";
 
-type Status = "idle" | "loading" | "error";
+type Status = "idle" | "loading" | "error" | "offline";
 
 export default function SummaryPage() {
   const t = useTranslations("summary");
   const locale = useLocale();
+  const { status: syncStatus } = useOnlineSync();
+  const isOnline = syncStatus !== "offline";
   const [status, setStatus] = useState<Status>("idle");
   const [summary, setSummary] = useState<string | null>(null);
 
   async function handleGenerate() {
+    if (!isOnline) {
+      setStatus("offline");
+      return;
+    }
+
     setStatus("loading");
     setSummary(null);
 
@@ -58,6 +66,12 @@ export default function SummaryPage() {
       {status === "error" && (
         <p role="alert" className="text-sm text-red-600">
           {t("errorMessage")}
+        </p>
+      )}
+
+      {status === "offline" && (
+        <p role="alert" className="text-sm text-amber-600">
+          {t("offlineMessage")}
         </p>
       )}
 

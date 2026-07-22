@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface PinPadProps {
   length?: number;
@@ -24,6 +25,7 @@ const DIGIT_ROWS = [
  * React's own lint rule (`react-hooks/set-state-in-effect`) flags.
  */
 export function PinPad({ length = 4, onComplete }: PinPadProps) {
+  const t = useTranslations("pinPad");
   const [digits, setDigits] = useState("");
 
   function pressDigit(digit: string) {
@@ -45,7 +47,7 @@ export function PinPad({ length = 4, onComplete }: PinPadProps) {
   return (
     <div className="flex flex-col items-center gap-4">
       <div
-        aria-label={`${digits.length} of ${length} digits entered`}
+        aria-label={t("digitsEntered", { entered: digits.length, length })}
         className="flex gap-3"
       >
         {Array.from({ length }).map((_, i) => (
@@ -79,7 +81,7 @@ export function PinPad({ length = 4, onComplete }: PinPadProps) {
         <button
           type="button"
           onClick={pressBackspace}
-          aria-label="Backspace"
+          aria-label={t("backspace")}
           className="h-16 w-16 rounded-full border text-xl font-medium active:bg-zinc-100 dark:active:bg-zinc-800"
         >
           ⌫

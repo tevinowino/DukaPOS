@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { addProduct } from "@/lib/db/products";
+import { useOnlineSync } from "@/lib/sync/useOnlineSync";
 import type { ProductGuess } from "@/lib/ai/types";
 import { PhotoCapture } from "@/components/PhotoCapture";
 import { ProductForm, type ProductFormValues } from "@/components/ProductForm";
@@ -25,24 +26,14 @@ export default function PhotoProductPage() {
   const t = useTranslations("photoProduct");
   const router = useRouter();
   const [view, setView] = useState<View>({ step: "capture" });
-  const [isOnline, setIsOnline] = useState(
-    () => typeof navigator === "undefined" || navigator.onLine,
-  );
-
-  useEffect(() => {
-    function updateOnlineStatus() {
-      setIsOnline(navigator.onLine);
-    }
-    window.addEventListener("online", updateOnlineStatus);
-    window.addEventListener("offline", updateOnlineStatus);
-    return () => {
-      window.removeEventListener("online", updateOnlineStatus);
-      window.removeEventListener("offline", updateOnlineStatus);
-    };
-  }, []);
+  // Reuses Phase 5's online/offline detection (global-rules DRY, and this
+  // phase's own audit mandate) rather than the separate listener this page
+  // originally rolled on its own in Phase 6.
+  const { status: syncStatus } = useOnlineSync();
+  const isOnline = syncStatus !== "offline";
 
   async function handleCapture(photo: Blob) {
-    if (!navigator.onLine) {
+    if (!isOnline) {
       setView({ step: "failed", message: t("offlineMessage") });
       return;
     }

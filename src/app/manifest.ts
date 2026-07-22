@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
 
-// Placeholder icons for the hackathon build — real branding is out of
-// scope until Phase 9 (see plan/phase-09-localization-and-pwa-polish).
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "DukaPOS",
@@ -16,11 +14,25 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/icon-192.png",
         sizes: "192x192",
         type: "image/png",
+        purpose: "any",
       },
       {
         src: "/icon-512.png",
         sizes: "512x512",
         type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-maskable-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: "/icon-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };

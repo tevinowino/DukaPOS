@@ -1,4 +1,15 @@
 {
+  "localeToggle": {
+    "english": "EN",
+    "swahili": "SW"
+  },
+  "pinPad": {
+    "digitsEntered": "Tarakimu {entered} kati ya {length} zimewekwa",
+    "backspace": "Futa nyuma"
+  },
+  "offlineIndicator": {
+    "offlineBadge": "Haiko mtandaoni — mabadiliko yamehifadhiwa kwenye kifaa hiki"
+  },
   "shell": {
     "appName": "DukaPOS",
     "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako",
@@ -114,6 +125,7 @@
     "parseButton": "Changanua sasisho",
     "parsing": "Inasoma sasisho lako…",
     "parseFailedMessage": "Imeshindikana kusoma — jaribu kuandika tofauti",
+    "offlineMessage": "Kusoma sasisho kunahitaji mtandao — tutajaribu tena ukiwa mtandaoni tena",
     "unmatchedProduct": "Imeshindwa kulinganisha na bidhaa iliyopo — iongeze kwanza, au ondoa mstari huu.",
     "addProductLink": "Ongeza bidhaa",
     "quantityLabel": "Idadi ya {name}",
@@ -129,7 +141,8 @@
     "generateButton": "Tengeneza muhtasari",
     "regenerateButton": "Tengeneza upya",
     "generating": "Inatengeneza muhtasari…",
-    "errorMessage": "Imeshindikana kutengeneza muhtasari — jaribu tena"
+    "errorMessage": "Imeshindikana kutengeneza muhtasari — jaribu tena",
+    "offlineMessage": "Muhtasari unahitaji mtandao — tutajaribu tena ukiwa mtandaoni tena"
   },
   "mpesaCheckout": {
     "title": "Lipa kwa M-Pesa",

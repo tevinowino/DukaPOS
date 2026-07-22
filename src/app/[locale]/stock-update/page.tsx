@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLiveQuery } from "dexie-react-hooks";
 import { listProducts, applyStockDelta } from "@/lib/db/products";
+import { useOnlineSync } from "@/lib/sync/useOnlineSync";
 import type { StockUpdate } from "@/lib/ai/types";
 
 interface EditableLine extends StockUpdate {
@@ -23,9 +24,11 @@ function parseQuantityInput(raw: string): number | undefined {
 export default function StockUpdatePage() {
   const t = useTranslations("stockUpdate");
   const products = useLiveQuery(() => listProducts(), []) ?? [];
+  const { status: syncStatus } = useOnlineSync();
+  const isOnline = syncStatus !== "offline";
 
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<"idle" | "parsing" | "parseFailed">("idle");
+  const [status, setStatus] = useState<"idle" | "parsing" | "parseFailed" | "offline">("idle");
   const [lines, setLines] = useState<EditableLine[] | null>(null);
   const [applyResult, setApplyResult] = useState<{ applied: number; lineErrors: string[] } | null>(
     null,
@@ -34,6 +37,11 @@ export default function StockUpdatePage() {
   async function handleParse() {
     const trimmed = text.trim();
     if (!trimmed) {
+      return;
+    }
+
+    if (!isOnline) {
+      setStatus("offline");
       return;
     }
 
@@ -128,6 +136,12 @@ export default function StockUpdatePage() {
       {status === "parseFailed" && (
         <p role="alert" className="text-sm text-red-600">
           {t("parseFailedMessage")}
+        </p>
+      )}
+
+      {status === "offline" && (
+        <p role="alert" className="text-sm text-amber-600">
+          {t("offlineMessage")}
         </p>
       )}
 
