@@ -9,6 +9,8 @@
 
 **⚠️ No `GEMINI_API_KEY` was available in this environment** (same situation as Phase 5's Convex deployment — no interactive way to obtain one here). All required tests mock `@google/genai` at the module boundary and pass with zero live API calls. The model id, prompt, and JSON-schema-constrained response format are implemented per verified SDK types, but **latency and real-world accuracy are unverified** — see Design Decisions (b) and Handoff Notes.
 
+**UPDATE from Phase 7 (2026-07-22):** a real `GEMINI_API_KEY` became available and Phase 7 ran live smoke tests. Two corrections to what's described below, made in `src/lib/ai/providers/hosted.ts` (shared by this phase and Phase 7 — one fix covers both): **(1)** the model id chosen here, `gemma-4-4b-it`, does not actually exist for this account (`404 NOT_FOUND`) — only `gemma-4-26b-a4b-it` and `gemma-4-31b-it` are real; the code now uses `gemma-4-26b-a4b-it`. **(2)** the model was observed wrapping JSON responses in a markdown code fence despite `responseMimeType: "application/json"`; a defensive `stripJsonFence` step was added before every `JSON.parse`. See Phase 7's overview.md ("Design Decisions" (a)/(b) and "How to Manually Verify This Phase") for the full detail, verbatim live-test output, and latency figures. Treat *this* file's model id and "unverified" framing below as historical — Phase 7's file is the current source of truth for `hosted.ts`'s actual state.
+
 ## What Was Built
 
 - `src/lib/ai/types.ts` — `ProductGuess`, `AiIdentifyError`, `AiProvider` interface.

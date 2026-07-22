@@ -4,7 +4,9 @@
     "tagline": "Track stock and sales from your phone",
     "newSaleButton": "New sale",
     "viewStockButton": "View stock",
-    "viewSalesButton": "Sales log"
+    "viewSalesButton": "Sales log",
+    "stockUpdateButton": "Update stock (text)",
+    "summaryButton": "Today's summary"
   },
   "onboarding": {
     "title": "Set up your shop",
@@ -101,5 +103,30 @@
     "confirmTitle": "Confirm the details",
     "offlineMessage": "AI identification needs a connection — add manually, or we'll try again once you're back online",
     "identifyFailedMessage": "Couldn't identify this — add manually"
+  },
+  "stockUpdate": {
+    "title": "Update stock",
+    "backToHome": "← Home",
+    "inputLabel": "Describe what changed",
+    "placeholder": "e.g. \"sold 3 bread, add 10 rice\" or \"nimeongeza 5 sukari\"",
+    "parseButton": "Parse update",
+    "parsing": "Reading your update…",
+    "parseFailedMessage": "Couldn't read that — try rephrasing it",
+    "unmatchedProduct": "Couldn't match this to an existing product — add it first, or remove this line.",
+    "addProductLink": "Add product",
+    "quantityLabel": "Quantity for {name}",
+    "quantityPlaceholder": "Qty",
+    "removeButton": "Remove",
+    "applyButton": "Apply {count} changes",
+    "applySuccess": "Updated {count} products.",
+    "lineApplyFailed": "Couldn't update {name} — it may have been deleted"
+  },
+  "summary": {
+    "title": "Today's summary",
+    "backToHome": "← Home",
+    "generateButton": "Generate summary",
+    "regenerateButton": "Regenerate",
+    "generating": "Generating summary…",
+    "errorMessage": "Couldn't generate a summary right now — try again"
   }
 }

@@ -60,3 +60,22 @@ export async function getProduct(id: string): Promise<Product | undefined> {
 export async function getProductByBarcode(barcode: string): Promise<Product | undefined> {
   return db.products.where("barcode").equals(barcode).first();
 }
+
+/**
+ * Adjusts a product's `stockQty` by a signed delta (positive to increase,
+ * negative to decrease), clamped at zero — never negative. The single
+ * place any stock-quantity math happens; both a cash sale's deduction
+ * (`transactions.ts`'s `deductStock`) and a natural-language stock update
+ * (Phase 7's stock-update page) call this rather than each computing the
+ * clamp themselves. Goes through `updateProduct` so the change is
+ * enqueued for sync like any other product edit. Throws if the product no
+ * longer exists — callers that need to handle that gracefully (e.g. a
+ * batch where one line's product was deleted mid-flow) catch it per line.
+ */
+export async function applyStockDelta(productId: string, delta: number): Promise<void> {
+  const product = await db.products.get(productId);
+  if (!product) {
+    throw new Error(`Product ${productId} no longer exists`);
+  }
+  await updateProduct(productId, { stockQty: Math.max(0, product.stockQty + delta) });
+}

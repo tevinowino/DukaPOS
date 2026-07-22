@@ -15,6 +15,8 @@ describe("ShellHome", () => {
             newSaleButton: "New sale",
             viewStockButton: "View stock",
             viewSalesButton: "Sales log",
+            stockUpdateButton: "Update stock (text)",
+            summaryButton: "Today's summary",
           },
         }}
       >

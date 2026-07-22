@@ -31,6 +31,12 @@ export function ShellHome() {
         <Link href="/transactions" className="rounded border px-6 py-3 text-base font-medium">
           {t("viewSalesButton")}
         </Link>
+        <Link href="/stock-update" className="rounded border px-6 py-3 text-base font-medium">
+          {t("stockUpdateButton")}
+        </Link>
+        <Link href="/summary" className="rounded border px-6 py-3 text-base font-medium">
+          {t("summaryButton")}
+        </Link>
       </div>
     </main>
   );

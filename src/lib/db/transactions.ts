@@ -1,5 +1,5 @@
 import { db, type Transaction } from "./schema";
-import { updateProduct } from "./products";
+import { applyStockDelta } from "./products";
 import { enqueue } from "../sync/queue";
 
 export interface SaleLineItem {
@@ -13,17 +13,18 @@ export interface SaleLineItem {
  * sale; Phase 8's M-Pesa webhook-completion path mirrors this exact
  * clamp-at-zero logic in a Convex mutation (it cannot import this
  * Dexie-bound function, since Convex functions run server-side with no
- * access to the browser's IndexedDB — see Phase 5's overview.md).
- * No-ops if the product no longer exists. Goes through `updateProduct`
- * (not a raw `db.products.update`) so the stock change also gets enqueued
- * for sync, same as any other product edit.
+ * access to the browser's IndexedDB — see Phase 5's overview.md). The
+ * clamp itself lives in `products.ts`'s `applyStockDelta` — this is a
+ * thin, sale-specific wrapper (negative delta, and no-op instead of throw
+ * if the product no longer exists, since a sale's own product-existence
+ * check already happens in `recordCashSale`).
  */
 export async function deductStock(productId: string, quantity: number): Promise<void> {
-  const product = await db.products.get(productId);
-  if (!product) {
-    return;
+  try {
+    await applyStockDelta(productId, -quantity);
+  } catch {
+    // Product no longer exists — deductStock's contract is to no-op, not throw.
   }
-  await updateProduct(productId, { stockQty: Math.max(0, product.stockQty - quantity) });
 }
 
 /**

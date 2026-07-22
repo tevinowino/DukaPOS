@@ -1,4 +1,5 @@
-import type { ProductGuess } from "./types";
+import type { Product } from "@/lib/db/schema";
+import type { DaySummary, DaySummaryInput, ProductGuess, StockUpdate } from "./types";
 import { hostedProvider } from "./providers/hosted";
 import { selfhostedProvider } from "./providers/selfhosted";
 
@@ -13,4 +14,12 @@ function activeProvider() {
 
 export function identifyProduct(imageBytes: Uint8Array, mimeType: string): Promise<ProductGuess> {
   return activeProvider().identifyProduct(imageBytes, mimeType);
+}
+
+export function parseStockUpdate(text: string, existingProducts: Product[]): Promise<StockUpdate[]> {
+  return activeProvider().parseStockUpdate(text, existingProducts);
+}
+
+export function generateSummary(input: DaySummaryInput): Promise<DaySummary> {
+  return activeProvider().generateSummary(input);
 }

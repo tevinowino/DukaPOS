@@ -4,7 +4,9 @@
     "tagline": "Fuatilia bidhaa na mauzo kutoka kwenye simu yako",
     "newSaleButton": "Uuzaji mpya",
     "viewStockButton": "Angalia bidhaa",
-    "viewSalesButton": "Rekodi za mauzo"
+    "viewSalesButton": "Rekodi za mauzo",
+    "stockUpdateButton": "Sasisha bidhaa (maandishi)",
+    "summaryButton": "Muhtasari wa leo"
   },
   "onboarding": {
     "title": "Weka duka lako",
@@ -101,5 +103,30 @@
     "confirmTitle": "Thibitisha maelezo",
     "offlineMessage": "Utambuzi wa AI unahitaji mtandao — ongeza mwenyewe, au tutajaribu tena ukiwa mtandaoni tena",
     "identifyFailedMessage": "Imeshindikana kutambua — ongeza mwenyewe"
+  },
+  "stockUpdate": {
+    "title": "Sasisha bidhaa",
+    "backToHome": "← Nyumbani",
+    "inputLabel": "Eleza kilichobadilika",
+    "placeholder": "mfano \"nimeuza mkate 3, ongeza mchele 10\" au \"nimeongeza sukari 5\"",
+    "parseButton": "Changanua sasisho",
+    "parsing": "Inasoma sasisho lako…",
+    "parseFailedMessage": "Imeshindikana kusoma — jaribu kuandika tofauti",
+    "unmatchedProduct": "Imeshindwa kulinganisha na bidhaa iliyopo — iongeze kwanza, au ondoa mstari huu.",
+    "addProductLink": "Ongeza bidhaa",
+    "quantityLabel": "Idadi ya {name}",
+    "quantityPlaceholder": "Idadi",
+    "removeButton": "Ondoa",
+    "applyButton": "Tekeleza mabadiliko {count}",
+    "applySuccess": "Bidhaa {count} zimesasishwa.",
+    "lineApplyFailed": "Imeshindikana kusasisha {name} — huenda ilifutwa"
+  },
+  "summary": {
+    "title": "Muhtasari wa leo",
+    "backToHome": "← Nyumbani",
+    "generateButton": "Tengeneza muhtasari",
+    "regenerateButton": "Tengeneza upya",
+    "generating": "Inatengeneza muhtasari…",
+    "errorMessage": "Imeshindikana kutengeneza muhtasari — jaribu tena"
   }
 }
