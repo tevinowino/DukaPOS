@@ -75,8 +75,10 @@
     "lowStockWarning": "Zimebaki {count} pekee",
     "totalLabel": "Jumla: KES {total}",
     "paymentCash": "Taslimu",
-    "paymentMpesaComingSoon": "M-Pesa (inakuja hivi karibuni)",
-    "confirmButton": "Thibitisha uuzaji"
+    "paymentMpesa": "M-Pesa",
+    "mpesaSingleItemOnly": "Malipo ya M-Pesa ni kwa bidhaa moja kwa wakati — tumia Taslimu kwa bidhaa nyingi, au ondoa mistari ya ziada.",
+    "confirmButton": "Thibitisha uuzaji",
+    "payWithMpesaButton": "Lipa kwa M-Pesa"
   },
   "transactions": {
     "title": "Mauzo",
@@ -128,5 +130,19 @@
     "regenerateButton": "Tengeneza upya",
     "generating": "Inatengeneza muhtasari…",
     "errorMessage": "Imeshindikana kutengeneza muhtasari — jaribu tena"
+  },
+  "mpesaCheckout": {
+    "title": "Lipa kwa M-Pesa",
+    "backToSale": "← Rudi kwenye uuzaji",
+    "backToHome": "← Nyumbani",
+    "summary": "{name} × {quantity} — KES {total}",
+    "phoneLabel": "Namba ya simu ya M-Pesa",
+    "sendPushButton": "Tuma ombi la malipo",
+    "initiating": "Inatuma ombi la malipo…",
+    "waitingTitle": "Angalia simu yako",
+    "waitingBody": "Weka PIN yako ya M-Pesa kwenye simu yako ili kukamilisha malipo haya.",
+    "successMessage": "Malipo yamepokelewa — uuzaji umekamilika.",
+    "timeoutMessage": "Hii inachukua muda mrefu kuliko ilivyotarajiwa. Ikiwa malipo yatafanikiwa, yatarekodiwa kiotomatiki — angalia rekodi za mauzo baadaye kidogo.",
+    "genericError": "Imeshindikana kuanzisha malipo ya M-Pesa — jaribu tena"
   }
 }

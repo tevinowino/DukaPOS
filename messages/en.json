@@ -75,8 +75,10 @@
     "lowStockWarning": "Only {count} left",
     "totalLabel": "Total: KES {total}",
     "paymentCash": "Cash",
-    "paymentMpesaComingSoon": "M-Pesa (coming soon)",
-    "confirmButton": "Confirm sale"
+    "paymentMpesa": "M-Pesa",
+    "mpesaSingleItemOnly": "M-Pesa checkout is one item at a time — use Cash for multiple items, or remove extra lines.",
+    "confirmButton": "Confirm sale",
+    "payWithMpesaButton": "Pay with M-Pesa"
   },
   "transactions": {
     "title": "Sales",
@@ -128,5 +130,19 @@
     "regenerateButton": "Regenerate",
     "generating": "Generating summary…",
     "errorMessage": "Couldn't generate a summary right now — try again"
+  },
+  "mpesaCheckout": {
+    "title": "Pay with M-Pesa",
+    "backToSale": "← Back to sale",
+    "backToHome": "← Home",
+    "summary": "{name} × {quantity} — KES {total}",
+    "phoneLabel": "M-Pesa phone number",
+    "sendPushButton": "Send payment request",
+    "initiating": "Sending payment request…",
+    "waitingTitle": "Check your phone",
+    "waitingBody": "Enter your M-Pesa PIN on your phone to complete this payment.",
+    "successMessage": "Payment received — sale complete.",
+    "timeoutMessage": "This is taking longer than expected. If the payment goes through, it'll be recorded automatically — check the sales log shortly.",
+    "genericError": "Couldn't start the M-Pesa payment — try again"
   }
 }

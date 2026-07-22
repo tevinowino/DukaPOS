@@ -13,11 +13,14 @@ interface SaleLine {
   quantity: number;
 }
 
+type PaymentMethod = "cash" | "mpesa";
+
 export default function SellPage() {
   const t = useTranslations("sell");
   const router = useRouter();
   const [lines, setLines] = useState<SaleLine[]>([]);
   const [picking, setPicking] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
 
   function addProduct(product: Product) {
     setPicking(false);
@@ -45,10 +48,24 @@ export default function SellPage() {
   }
 
   const total = lines.reduce((sum, line) => sum + line.product.priceKES * line.quantity, 0);
-  const canConfirm = lines.length > 0 && lines.every((line) => line.quantity >= 1);
+  const hasLines = lines.length > 0;
+  // M-Pesa checkout is scoped to a single product line — see
+  // plan/phase-08.../overview.md "Design Decisions" for why (Convex's
+  // markPending/markCompleted shape is inherently one-transaction-per-
+  // reference, unlike cash's multi-item recordCashSale).
+  const mpesaEligible = lines.length === 1;
+  const canConfirm =
+    hasLines &&
+    lines.every((line) => line.quantity >= 1) &&
+    (paymentMethod === "cash" || mpesaEligible);
 
   async function handleConfirm() {
     if (!canConfirm) {
+      return;
+    }
+    if (paymentMethod === "mpesa") {
+      const [line] = lines;
+      router.push(`/checkout/mpesa?productId=${line.product.id}&quantity=${line.quantity}`);
       return;
     }
     await recordCashSale(lines.map((line) => ({ productId: line.product.id, quantity: line.quantity })));
@@ -116,13 +133,37 @@ export default function SellPage() {
 
       <p className="text-lg font-semibold">{t("totalLabel", { total: total.toLocaleString() })}</p>
 
-      <div className="flex gap-2">
-        <span className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
-          {t("paymentCash")}
-        </span>
-        <span aria-disabled="true" className="rounded border px-4 py-2 text-sm text-zinc-400">
-          {t("paymentMpesaComingSoon")}
-        </span>
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("cash")}
+            aria-pressed={paymentMethod === "cash"}
+            className={
+              paymentMethod === "cash"
+                ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+                : "rounded border px-4 py-2 text-sm font-medium"
+            }
+          >
+            {t("paymentCash")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("mpesa")}
+            disabled={!mpesaEligible}
+            aria-pressed={paymentMethod === "mpesa"}
+            className={
+              paymentMethod === "mpesa"
+                ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+                : "rounded border px-4 py-2 text-sm font-medium disabled:opacity-50"
+            }
+          >
+            {t("paymentMpesa")}
+          </button>
+        </div>
+        {!mpesaEligible && (
+          <p className="text-sm text-zinc-500">{t("mpesaSingleItemOnly")}</p>
+        )}
       </div>
 
       <button
@@ -131,7 +172,7 @@ export default function SellPage() {
         disabled={!canConfirm}
         className="rounded bg-zinc-900 py-3 text-base font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
       >
-        {t("confirmButton")}
+        {paymentMethod === "mpesa" ? t("payWithMpesaButton") : t("confirmButton")}
       </button>
     </main>
   );
