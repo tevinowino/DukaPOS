@@ -2,11 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OfflineIndicator } from "./OfflineIndicator";
-import { useOnlineSync, type UseOnlineSyncResult } from "@/lib/sync/useOnlineSync";
-
-vi.mock("@/lib/sync/useOnlineSync", () => ({
-  useOnlineSync: vi.fn(),
-}));
+import type { SyncStatus } from "@/lib/sync/useOnlineSync";
 
 const messages = {
   offlineIndicator: {
@@ -14,14 +10,10 @@ const messages = {
   },
 };
 
-function mockSyncStatus(status: UseOnlineSyncResult["status"]) {
-  vi.mocked(useOnlineSync).mockReturnValue({ status, lastSyncedAt: null, syncNow: vi.fn() });
-}
-
-function renderIndicator() {
+function renderIndicator(status: SyncStatus) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <OfflineIndicator />
+      <OfflineIndicator status={status} />
     </NextIntlClientProvider>,
   );
 }
@@ -29,13 +21,10 @@ function renderIndicator() {
 describe("OfflineIndicator", () => {
   afterEach(() => {
     vi.useRealTimers();
-    vi.clearAllMocks();
   });
 
   it("shows the offline badge immediately when already offline at mount", () => {
-    mockSyncStatus("offline");
-
-    renderIndicator();
+    renderIndicator("offline");
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "You're offline — changes are saved on this device",
@@ -43,23 +32,19 @@ describe("OfflineIndicator", () => {
   });
 
   it("renders nothing when the sync status is online (idle/synced/syncing/failed) at mount", () => {
-    mockSyncStatus("idle");
-
-    renderIndicator();
+    renderIndicator("idle");
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("debounces a mid-session online-to-offline transition instead of flipping instantly", async () => {
-    mockSyncStatus("idle");
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { rerender } = renderIndicator();
+    const { rerender } = renderIndicator("idle");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
-    mockSyncStatus("offline");
     rerender(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <OfflineIndicator />
+        <OfflineIndicator status="offline" />
       </NextIntlClientProvider>,
     );
 

@@ -2,22 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useOnlineSync } from "@/lib/sync/useOnlineSync";
+import type { SyncStatus } from "@/lib/sync/useOnlineSync";
 
 /** Absorbs rapid online/offline flapping on an unstable connection so the badge doesn't flicker distractingly. */
 const DEBOUNCE_MS = 1_500;
 
 /**
- * A small, persistent "you're offline" badge, visible app-wide. Reuses
- * Phase 5's `useOnlineSync` for detection (global-rules DRY) rather than
- * a second listener — `SyncStatusBar` already surfaces detailed sync
- * state including an offline message; this is a plainer, higher-contrast
- * signal specifically for "can I trust the network right now," useful on
- * screens (like the photo/AI flows) that need a blunt yes/no answer.
+ * A small, persistent "you're offline" badge, visible app-wide. Takes
+ * `status` as a prop rather than calling `useOnlineSync` itself — see
+ * `AppLockGate.tsx`'s doc comment for why sharing one hook instance with
+ * `SyncStatusBar` matters, not just DRY. This is a plainer, higher-contrast
+ * signal than `SyncStatusBar`'s detailed sync state, specifically for "can
+ * I trust the network right now," useful on screens (like the photo/AI
+ * flows) that need a blunt yes/no answer.
  */
-export function OfflineIndicator() {
+export function OfflineIndicator({ status }: { status: SyncStatus }) {
   const t = useTranslations("offlineIndicator");
-  const { status } = useOnlineSync();
   const [debouncedOffline, setDebouncedOffline] = useState(status === "offline");
 
   useEffect(() => {

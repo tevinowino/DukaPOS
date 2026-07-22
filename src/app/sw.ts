@@ -40,4 +40,31 @@ const serwist = new Serwist({
   runtimeCaching: defaultCache,
 });
 
+/**
+ * Every route is dynamic (server-rendered per request — there is no
+ * static HTML/RSC payload for any of them to precache), so a route the
+ * shopkeeper has genuinely never opened before has nothing cached for the
+ * `ignoreSearch` fix above to find either — proven live (Phase 10
+ * hardening): a fresh offline navigation to an unvisited route hung
+ * indefinitely, distinct from the already-fixed "visited once, but with a
+ * different `_rsc` nonce" case.
+ *
+ * `NetworkFirst` documents that it throws once both the network and the
+ * cache miss — exactly this case — so `setCatchHandler` (which only fires
+ * on that throw, unlike `navigateFallback`'s `NavigationRoute`, which
+ * would unconditionally intercept *every* navigation including normal
+ * online ones) is the correct, narrowly-scoped place to catch it: fall
+ * back to the static, precached `offline.html` shell instead of hanging
+ * forever. This is a degraded experience (lands on a generic screen, not
+ * the requested one), not a fix for "every route works offline" — that
+ * would need precaching each route's actual data, which isn't possible
+ * for server-rendered content with no static build output.
+ */
+serwist.setCatchHandler(async ({ request }) => {
+  if (request.mode === "navigate") {
+    return (await serwist.matchPrecache("/offline.html")) ?? Response.error();
+  }
+  return Response.error();
+});
+
 serwist.addEventListeners();

@@ -154,7 +154,7 @@ SyncQueue (local only)
 
 ### 5.3 Sale with M-Pesa payment
 
-1. Shopkeeper selects item(s), chooses "Pay via M-Pesa"
+1. Shopkeeper selects **a single item** (see ADR-3's amendment — M-Pesa checkout is scoped to one product line per charge, unlike cash sales, which remain multi-item), chooses "Pay via M-Pesa"
 2. `/api/checkout` → Paystack Charge API → customer receives STK push
 3. Transaction saved locally as `pending`
 4. Paystack webhook hits `/api/webhooks/paystack` (signature verified) → transaction marked `completed` → stock deducted
@@ -177,7 +177,7 @@ SyncQueue (local only)
 
 ## 7. Security Considerations
 
-- All secrets (`GEMMA_API_KEY`, `PAYSTACK_SECRET_KEY`) server-side only, via environment variables, never in client bundles
+- All secrets (`GEMINI_API_KEY`, `PAYSTACK_SECRET_KEY`) server-side only, via environment variables, never in client bundles
 - Paystack webhook payloads verified via signature before being trusted
 - PIN-based auth stored hashed, not plain text
 - `.env.local` gitignored; `.env.example` committed with variable names only
@@ -205,7 +205,11 @@ Section 3/4.5 left the sync backend as "e.g. Convex/Postgres." Decided: **Convex
 
 ### ADR-3: How the client learns a pending M-Pesa payment completed (missing flow, §5.3)
 
-§5.3 stated the webhook marks the transaction completed and stock is deducted, but never specified how the client — whose local IndexedDB is the source of truth for stock — learns this happened, since a server-side webhook cannot write into a specific browser's IndexedDB. Decided: while the "waiting for payment" screen is open, the client polls `GET /api/checkout/status?reference=` (a Next.js route, not a direct Convex client call) every 3s for up to 90s. That route runs `fetchQuery` against Convex for the transaction's current status. The webhook handler (`/api/webhooks/paystack`) is what actually calls the Convex mutation that flips status to `completed` and decrements stock. Once the poll observes `completed`, the client applies the same stock decrement to its local Dexie tables and marks the local transaction `completed`. If the poll window elapses without confirmation, the transaction stays `pending` and is reconciled on the next `/api/sync` pass. No Convex client SDK is added to the frontend bundle; the browser's only server contact remains Next.js API routes.
+§5.3 stated the webhook marks the transaction completed and stock is deducted, but never specified how the client — whose local IndexedDB is the source of truth for stock — learns this happened, since a server-side webhook cannot write into a specific browser's IndexedDB. Decided: while the "waiting for payment" screen is open, the client polls `GET /api/checkout/status?reference=` (a Next.js route, not a direct Convex client call) every 3s for up to 90s. That route runs `fetchQuery` against Convex for the transaction's current status. The webhook handler (`/api/webhooks/paystack`) is what actually calls the Convex mutation that flips status to `completed` and decrements stock. Once the poll observes `completed`, the client applies the same stock decrement to its local Dexie tables and marks the local transaction `completed`. No Convex client SDK is added to the frontend bundle; the browser's only server contact remains Next.js API routes.
+
+**Also scoped to a single product line per charge** (Phase 8 implementation, not stated in the original plan): `markPending`/`markCompleted` take one `productId`/`quantity` pair, not a cart array. A multi-item M-Pesa cart would need either several separate STK pushes per sale (poor UX) or a redesigned `markCompleted` that decrements several products atomically under one `reference` — out of scope for this build. Cash sales are unaffected and remain multi-item (§4.5, `recordCashSale`).
+
+**Amendment — DEBT(prudent-deliberate), corrected from this ADR's original (inaccurate) text:** the "reconciled on the next `/api/sync` pass" claim above described a mechanism that was never actually built. `/api/sync` (§5.4) is push-only — it upserts the client's *own* queued writes into Convex; it never pulls Convex's state back down into the client's IndexedDB. So if the 90s poll window elapses before the webhook fires, Convex is updated correctly (the webhook still completes the mutation server-side) but the client has no way to learn about it afterward: the local transaction stays `pending` and local stock stays un-decremented indefinitely, with no further automatic reconciliation. Discovered and documented honestly in Phase 8's `overview.md`, which explicitly flagged this ADR's original text as inaccurate. Remediation path: either re-poll pending M-Pesa transactions on app foreground/reconnect, or build the pull-sync direction Phase 5 deferred (Convex → IndexedDB), neither of which is in scope for this build.
 
 ### ADR-4: Service worker via Serwist, not next-pwa
 
@@ -218,6 +222,17 @@ UI components read local data with `useLiveQuery` (`dexie-react-hooks`, ^1.1.3+)
 ### ADR-6: Locale strategy is cookie-based, not URL-prefixed
 
 §4.1 named `next-intl` without specifying routing. Decided: `localePrefix: 'never'` — a `[locale]` route segment still exists (required by next-intl), but the URL never shows it; the active locale is read from a cookie and switched via an in-app toggle, not a route change. Matches the PRD's "English/Swahili UI toggle" (a button, not separate URLs) for a single-shop app with no SEO requirement.
+
+**Amendment (Phase 9):** the in-app toggle (`AppIntlProvider`/`LocaleToggle`) switches the visible locale entirely client-side (React state, both message catalogs bundled) rather than via `router.refresh()` — required so the toggle keeps working with zero network dependency while offline. It also writes the `NEXT_LOCALE` cookie so the choice persists across a real reload. See ADR-7 for a consequence of this and of ADR-2's unlock-state design colliding.
+
+### ADR-7: `AppLockGate`'s in-memory unlock state does not survive a root-layout remount — a recurring, accepted gap
+
+ADR-2 decided the PIN-unlock state is in-memory only (`useState`, not persisted), on the reasoning that "a full reload re-checks and re-locks, which is the intended app-lock semantics." In practice this same remount has been triggered by two *other*, narrower events that aren't full user-initiated reloads, and both were found live rather than anticipated:
+
+1. **Phase 5:** Next.js's App Router automatically refreshes the current route on the browser's `online` event, which remounts `AppLockGate` and relocks the app mid-session, purely as a side effect of reconnecting.
+2. **Phase 9:** switching locale via the toggle (ADR-6), then triggering any subsequent server round trip (typically the next cross-screen navigation), remounts the same tree for the same underlying reason — `[locale]` is a real dynamic route segment even though ADR-6 hides it from the URL, and a server round trip after its resolved value changes forces React to remount everything under the root layout that depends on it.
+
+Both are accepted as `DEBT(prudent-deliberate)`, not bugs each fixed in isolation: the PIN screen is a fully functional recovery path (never a dead end, never data loss — just an unexpected extra prompt), and a `router.refresh()`-style fix for case 2 was tried and reverted because it made the relock happen on *every* toggle click instead of only sometimes (see Phase 9's `overview.md`). Having now recurred from two independent triggers, this is flagged here as a **systemic** pattern rather than two unrelated one-offs, for whoever next touches `AppLockGate`: the real fix, if it's ever worth doing, is likely moving the unlock flag to `sessionStorage` (survives an in-app remount, still clears on tab close, still distinct from ADR-2's local-only trust model) rather than patching each new remount trigger as it's discovered.
 
 ## 10. Risks & Architectural Mitigations
 

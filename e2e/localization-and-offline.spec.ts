@@ -154,3 +154,25 @@ test("navigating between screens while offline never shows a raw error state", a
     page.getByText("Reading updates needs a connection — we'll try again once you're back online"),
   ).toBeVisible();
 });
+
+/**
+ * Regression test for a bug found and fixed in Phase 10 (see its
+ * overview.md): this phase's `ignoreSearch` fix (above) only helps a
+ * route that was cached from *some* earlier online visit — a route the
+ * shopkeeper has never opened at all has no cache entry regardless, and
+ * offline hung indefinitely. `src/app/sw.ts`'s `setCatchHandler` now
+ * falls back to a static, precached `offline.html` shell in exactly this
+ * case, converting the hang into a working (if generic) screen.
+ */
+test("navigating offline to a route never visited this session falls back to the offline shell, not a hang", async ({
+  page,
+  context,
+}) => {
+  await completeOnboarding(page);
+  await waitForServiceWorkerActivation(page);
+
+  // Deliberately never visit "Sales log" (/transactions) while online.
+  await context.setOffline(true);
+  await page.getByRole("link", { name: "Sales log" }).click();
+  await expect(page.getByText(/hasn't been opened yet/i)).toBeVisible({ timeout: 10_000 });
+});
