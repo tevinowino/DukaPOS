@@ -92,16 +92,23 @@ rm -f public/sw.js && npm run test:e2e   # 12/12 specs passing (stale SW build a
 - **Low severity:** a commented-out `sk_live_...` Paystack key sits in the local, gitignored, never-committed `.env.local` (found during this phase's security audit). No actual exposure occurred; recommend the user delete that line or revoke the key if it was ever real.
 
 ### Still open — genuinely unverified (not a design tradeoff, just untested)
-- **`NEXT_PUBLIC_CONVEX_URL` / `CONVEX_DEPLOY_KEY` are still unset in this environment** — no live Convex deployment has ever been connected across all 10 phases. Every Convex-dependent code path has been verified against real, live Convex function definitions (source-read, cross-checked against the schema) and mocked-boundary tests, but never against an actual running deployment. This is the single most-recurring open item across the whole project (raised in Phases 5, 7, 8, 9, and again here) and should be the very first thing a human does before any live demo — see `docs/DEPLOYMENT.md` §2.
 - **Barcode scanner (`BarcodeDetector`/`@zxing/browser`) never tested against a real camera or physical barcode** (Phase 3) — only the manual-entry and permission-denied paths have been exercised, in this camera-less environment.
 - **Photo product identification never tested against a real photographed product** (Phase 6/7) — only a meaningless 1×1 test pixel has been sent to the live Gemini API; the 2.1–3.3s latency measurement is real, but accuracy against an actual product photo is not verified.
 - **The entire Swahili message catalog has never been reviewed by a native speaker** (Phase 1 through 9, every phase added its own strings to this same standing gap). See Handoff Notes for the priority list.
+
+### Addendum (2026-07-23): live Convex deployment connected
+
+The single most-recurring open item across this whole project (raised in Phases 5, 7, 8, 9, and again above) is now resolved. The user provided real deployment credentials (`tevin-owino/dukapos`, deployment `standing-retriever-94`); `NEXT_PUBLIC_CONVEX_URL` and `NEXT_PUBLIC_CONVEX_SITE_URL` are now set in `.env.local`, and `npx convex dev --once` pushed the schema and both function files for real, regenerating `convex/_generated/**` from the hand-written stand-ins that existed throughout Phases 5–10 (the regenerated files type-check cleanly against all existing code with zero changes needed — the stand-ins matched Convex's real templates exactly, as intended).
+
+**Verified live, not just via the app's own UI:** completed onboarding, added a product, and recorded a cash sale through the real running app (no mocks), then independently confirmed both rows exist in the live database via `npx convex data products` / `npx convex data transactions` directly — the first genuine, non-mocked end-to-end proof that browser → `/api/sync` → Convex works, across all 10 phases.
+
+This closes out `docs/DEPLOYMENT.md` §2's Convex setup steps as proven-correct-as-written (they were followed almost exactly to get this connected), not just as an untested runbook.
 
 ## Handoff Notes
 
 Priority-ordered — a human picking this project up next (before or instead of a live demo) should look at these in this order:
 
-1. **Connect a real Convex deployment** (`docs/DEPLOYMENT.md` §2) and re-run the full E2E suite / manual smoke test against it. This is the single biggest thing that's never been verified end-to-end in 10 phases of building against mocks.
+1. ~~Connect a real Convex deployment~~ — **done, see the 2026-07-23 addendum above.** A production deployment (`npx convex deploy`, separate from the `dev` one now connected) is still worth doing before a real public launch, per `docs/DEPLOYMENT.md` §2.
 2. **Get a native Swahili speaker to review the message catalog**, prioritizing the specific strings each phase flagged as least-scrutinized (Phase 9's overview.md has the most recent, most specific list; every earlier phase's own catalog additions have equally never been reviewed).
 3. **Test on a real phone with a real camera**: barcode scanning (a real EAN/UPC label) and photo product identification (a real product photo) — both are currently only verified via fallback/stub paths in this camera-less environment.
 4. Everything in "Known Debt → Still open — accepted, bounded" above is a deliberate, reasoned tradeoff, not an oversight — worth a skim before a demo so nothing there surprises anyone live, but none of it blocks shipping.
