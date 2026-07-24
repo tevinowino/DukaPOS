@@ -2,12 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Camera } from "lucide-react";
 import type { IScannerControls } from "@zxing/browser";
 import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+import { compressImage } from "@/lib/media/compressImage";
 
 interface BarcodeScannerProps {
   onDetect: (barcode: string) => void;
   onManualEntry: () => void;
+  /**
+   * When provided, barcode scanning and photo capture become one camera
+   * view instead of two separate flows (a shopkeeper shouldn't have to
+   * leave the live preview and hand off to a native camera app just
+   * because one item happens to have no barcode) — a shutter button
+   * appears over the video and this fires with the current frame,
+   * compressed the same way `PhotoCapture`'s file-based path is. Omitted
+   * by callers (like the add-product barcode flow) that already have
+   * their own separate photo entry point.
+   */
+  onCapturePhoto?: (photo: Blob) => void;
 }
 
 type ScannerState = "starting" | "scanning" | "permissionDenied";
@@ -74,17 +87,56 @@ async function enableContinuousFocusIfSupported(stream: MediaStream): Promise<vo
 }
 
 /**
- * Camera-based barcode scanner. One `getUserMedia` call acquires the
- * stream; `BarcodeDetector` reads it directly if the browser supports it
- * (Chrome/Edge/Android — not Safari/Firefox), otherwise `@zxing/browser`
- * reads the same stream via its `decodeFromStream`. Fires `onDetect` once
- * per held barcode, not dozens of times per second.
+ * Grabs the video element's current frame as a JPEG blob via an offscreen
+ * canvas — the one place this component reads pixels out of the live
+ * stream rather than just handing it to a barcode decoder.
  */
-export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps) {
+function captureVideoFrame(video: HTMLVideoElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      reject(new Error("Canvas 2D context unavailable"));
+      return;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Photo capture failed"))),
+      "image/jpeg",
+      0.92,
+    );
+  });
+}
+
+/**
+ * Camera-based barcode scanner and photo-capture shutter, sharing one
+ * `getUserMedia` stream. `BarcodeDetector` reads it directly if the
+ * browser supports it (Chrome/Edge/Android — not Safari/Firefox),
+ * otherwise `@zxing/browser` reads the same stream via its
+ * `decodeFromStream`. Fires `onDetect` once per held barcode, not dozens
+ * of times per second; fires `onCapturePhoto` once per shutter tap.
+ */
+export function BarcodeScanner({ onDetect, onManualEntry, onCapturePhoto }: BarcodeScannerProps) {
   const t = useTranslations("scanner");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<ScannerState>("starting");
   const lastDetection = useRef<{ code: string; at: number } | null>(null);
+
+  async function handleCapturePhoto() {
+    const video = videoRef.current;
+    if (!video || !onCapturePhoto) {
+      return;
+    }
+    try {
+      const frame = await captureVideoFrame(video);
+      const compressed = await compressImage(frame);
+      onCapturePhoto(compressed);
+    } catch {
+      // Best-effort — a failed grab just means the shopkeeper taps the shutter again.
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -244,10 +296,15 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative w-full overflow-hidden rounded-3xl bg-black">
-        <video ref={videoRef} muted playsInline className="w-full" />
+      {/* A fixed aspect ratio (not width-only sizing) keeps this panel a
+          predictable, mobile-friendly height regardless of what
+          resolution/orientation the device's camera actually reports —
+          real phones vary here, and `object-cover` crops to fill rather
+          than distorting or leaving letterboxed bars. */}
+      <div className="relative aspect-video w-full overflow-hidden rounded-3xl bg-black">
+        <video ref={videoRef} muted playsInline className="absolute inset-0 h-full w-full object-cover" />
         {/* Viewfinder corner brackets — purely decorative framing, no functional role. */}
-        <div className="pointer-events-none absolute inset-8 sm:inset-16">
+        <div className="pointer-events-none absolute inset-6 sm:inset-12">
           {[
             "top-0 left-0 border-t-4 border-l-4 rounded-tl-lg",
             "top-0 right-0 border-t-4 border-r-4 rounded-tr-lg",
@@ -262,11 +319,21 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
             {t("starting")}
           </p>
         )}
+        {state === "scanning" && onCapturePhoto && (
+          <button
+            type="button"
+            onClick={handleCapturePhoto}
+            aria-label={t("captureButtonLabel")}
+            className="absolute bottom-4 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white/80 bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-95"
+          >
+            <Camera size={26} />
+          </button>
+        )}
       </div>
       <button
         type="button"
         onClick={onManualEntry}
-        className="text-sm font-medium text-zinc-400 underline underline-offset-2"
+        className="py-1.5 text-sm font-medium text-zinc-400 underline underline-offset-2"
       >
         {t("enterManuallyInstead")}
       </button>

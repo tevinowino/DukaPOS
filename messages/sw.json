@@ -52,11 +52,11 @@
     "starting": "Inaanzisha kamera…",
     "permissionDenied": "Ufikiaji wa kamera ulikataliwa. Bado unaweza kuongeza bidhaa hii mwenyewe.",
     "enterManually": "Weka mwenyewe",
-    "enterManuallyInstead": "Weka mwenyewe badala yake"
+    "enterManuallyInstead": "Weka mwenyewe badala yake",
+    "captureButtonLabel": "Haina barcode? Piga picha ya bidhaa hii"
   },
   "scanSell": {
-    "modeBarcode": "Barcode",
-    "modePhoto": "Picha",
+    "modeScan": "Changanua",
     "modeSearch": "Tafuta",
     "addedMessage": "{name} imeongezwa",
     "typeBarcodeButton": "Haiwezi kuchanganuliwa? Andika namba",

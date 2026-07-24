@@ -10,17 +10,21 @@ import { ScanToSell } from "./ScanToSell";
 
 let capturedOnDetect: ((barcode: string) => void) | undefined;
 let capturedOnManualEntry: (() => void) | undefined;
+let capturedOnCapturePhoto: ((photo: Blob) => void) | undefined;
 let barcodeScannerMountCount = 0;
 vi.mock("@/components/BarcodeScanner", () => ({
   BarcodeScanner: ({
     onDetect,
     onManualEntry,
+    onCapturePhoto,
   }: {
     onDetect: (barcode: string) => void;
     onManualEntry: () => void;
+    onCapturePhoto: (photo: Blob) => void;
   }) => {
     capturedOnDetect = onDetect;
     capturedOnManualEntry = onManualEntry;
+    capturedOnCapturePhoto = onCapturePhoto;
     // Deliberately mount-only (empty deps), not per-render — this is the
     // thing ScanToSell.tsx's whole architecture exists to protect: the
     // camera-acquiring effect inside the real BarcodeScanner must not
@@ -34,14 +38,6 @@ vi.mock("@/components/BarcodeScanner", () => ({
   },
 }));
 
-let capturedOnCapture: ((photo: Blob) => void) | undefined;
-vi.mock("@/components/PhotoCapture", () => ({
-  PhotoCapture: ({ onCapture }: { onCapture: (photo: Blob) => void }) => {
-    capturedOnCapture = onCapture;
-    return <div data-testid="mock-photo-capture" />;
-  },
-}));
-
 let capturedOnSelect: ((product: Product) => void) | undefined;
 vi.mock("@/components/ProductPicker", () => ({
   ProductPicker: ({ onSelect }: { onSelect: (product: Product) => void }) => {
@@ -52,8 +48,7 @@ vi.mock("@/components/ProductPicker", () => ({
 
 const messages = {
   scanSell: {
-    modeBarcode: "Barcode",
-    modePhoto: "Photo",
+    modeScan: "Scan",
     modeSearch: "Search",
     addedMessage: "Added {name}",
     typeBarcodeButton: "Can't scan it? Type the number",
@@ -88,7 +83,7 @@ describe("ScanToSell", () => {
     await db.products.clear();
     capturedOnDetect = undefined;
     capturedOnManualEntry = undefined;
-    capturedOnCapture = undefined;
+    capturedOnCapturePhoto = undefined;
     capturedOnSelect = undefined;
     barcodeScannerMountCount = 0;
     vi.restoreAllMocks();
@@ -203,7 +198,12 @@ describe("ScanToSell", () => {
     await act(async () => {
       await capturedOnDetect!("2222222222222");
     });
-    expect(await screen.findByText("New product — not in your stock yet")).toBeInTheDocument();
+    // A generous timeout (not the 1000ms default): this assertion follows
+    // two full resolve cycles including real userEvent typing, and under a
+    // loaded CI/sandbox machine the default budget is tight enough to flake
+    // even though the underlying `act()` above already awaited every state
+    // update — this widens the poll window without weakening the assertion.
+    expect(await screen.findByText("New product — not in your stock yet", {}, { timeout: 5000 })).toBeInTheDocument();
 
     expect(barcodeScannerMountCount).toBe(1);
     expect(capturedOnDetect).toBe(onDetectBeforeCycle);
@@ -261,6 +261,9 @@ describe("ScanToSell", () => {
   });
 
   it("matches a photo guess to an existing stocked product and adds it directly, without showing the quick-add card", async () => {
+    // The shutter button lives inside the same Scan tab as barcode
+    // detection (BarcodeScanner.onCapturePhoto) — no separate Photo tab to
+    // switch to first, matching the "barcode and photo as one camera view" design.
     const stocked = await addProduct({
       name: "Blueband Margarine 500g",
       category: "Groceries",
@@ -275,14 +278,10 @@ describe("ScanToSell", () => {
         json: async () => ({ name: "Blueband Margarine", category: "Groceries", estimatedPriceKES: 300 }),
       }),
     );
-    const user = userEvent.setup();
     const { onAddProduct } = renderScanToSell();
 
-    await user.click(screen.getByRole("button", { name: "Photo" }));
-    expect(screen.getByTestId("mock-photo-capture")).toBeInTheDocument();
-
     await act(async () => {
-      await capturedOnCapture!(new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }));
+      await capturedOnCapturePhoto!(new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }));
     });
 
     expect(onAddProduct).toHaveBeenCalledWith(stocked);
@@ -297,12 +296,10 @@ describe("ScanToSell", () => {
         json: async () => ({ name: "Imported Chocolate Bar", category: "Snacks", estimatedPriceKES: 250 }),
       }),
     );
-    const user = userEvent.setup();
     renderScanToSell();
 
-    await user.click(screen.getByRole("button", { name: "Photo" }));
     await act(async () => {
-      await capturedOnCapture!(new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }));
+      await capturedOnCapturePhoto!(new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }));
     });
 
     expect(await screen.findByLabelText("Selling price (KES)")).toHaveValue("250");

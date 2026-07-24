@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DecodeHintType, BarcodeFormat } from "@zxing/library";
@@ -18,19 +19,29 @@ vi.mock("@zxing/browser", () => ({
   }),
 }));
 
+const compressImageMock = vi.fn();
+vi.mock("@/lib/media/compressImage", () => ({
+  compressImage: (...args: unknown[]) => compressImageMock(...args),
+}));
+
 const messages = {
   scanner: {
     starting: "Starting camera…",
     permissionDenied: "Camera access was denied. You can still add this product manually.",
     enterManually: "Enter manually",
     enterManuallyInstead: "Enter manually instead",
+    captureButtonLabel: "No barcode? Take a photo of this item",
   },
 };
 
-function renderScanner(onDetect = vi.fn(), onManualEntry = vi.fn()) {
+function renderScanner(
+  onDetect = vi.fn(),
+  onManualEntry = vi.fn(),
+  onCapturePhoto?: (photo: Blob) => void,
+) {
   const { unmount } = render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <BarcodeScanner onDetect={onDetect} onManualEntry={onManualEntry} />
+      <BarcodeScanner onDetect={onDetect} onManualEntry={onManualEntry} onCapturePhoto={onCapturePhoto} />
     </NextIntlClientProvider>,
   );
   return { onDetect, onManualEntry, unmount };
@@ -46,8 +57,11 @@ describe("BarcodeScanner", () => {
     // Clear call history on just the specific mocks each test cares about.
     vi.spyOn(HTMLMediaElement.prototype, "play").mockRestore();
     vi.spyOn(console, "warn").mockRestore();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockRestore();
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockRestore();
     decodeFromStreamMock.mockClear();
     stopMock.mockClear();
+    compressImageMock.mockReset();
   });
 
   function mockSuccessfulCamera() {
@@ -144,6 +158,42 @@ describe("BarcodeScanner", () => {
     unmount();
     console.warn("MultiFormatReader: non-ReaderException from reader:", new Error("after unmount"));
     expect(warnSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows no capture button at all when the caller doesn't provide onCapturePhoto (e.g. the add-product flow, which has its own separate photo entry point)", async () => {
+    mockSuccessfulCamera();
+    decodeFromStreamMock.mockResolvedValue({ stop: stopMock });
+    renderScanner();
+
+    await waitFor(() => expect(decodeFromStreamMock).toHaveBeenCalledTimes(1));
+
+    expect(screen.queryByRole("button", { name: "No barcode? Take a photo of this item" })).not.toBeInTheDocument();
+  });
+
+  it("captures, compresses, and forwards the current video frame when the shutter button is tapped", async () => {
+    mockSuccessfulCamera();
+    decodeFromStreamMock.mockResolvedValue({ stop: stopMock });
+    const rawFrameBlob = new Blob([new Uint8Array([1])], { type: "image/jpeg" });
+    const compressedBlob = new Blob([new Uint8Array([2])], { type: "image/jpeg" });
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
+      this: HTMLCanvasElement,
+      callback: BlobCallback,
+    ) {
+      callback(rawFrameBlob);
+    });
+    compressImageMock.mockResolvedValue(compressedBlob);
+    const onCapturePhoto = vi.fn();
+    const user = userEvent.setup();
+    renderScanner(vi.fn(), vi.fn(), onCapturePhoto);
+
+    await waitFor(() => expect(decodeFromStreamMock).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole("button", { name: "No barcode? Take a photo of this item" }));
+
+    expect(compressImageMock).toHaveBeenCalledWith(rawFrameBlob);
+    await waitFor(() => expect(onCapturePhoto).toHaveBeenCalledWith(compressedBlob));
   });
 
   it("shows a permission-denied message and manual-entry affordance when getUserMedia rejects, without ever calling onDetect", async () => {

@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { Camera, CheckCircle2, Keyboard, Loader2, ScanBarcode, Search } from "lucide-react";
+import { CheckCircle2, Keyboard, Loader2, ScanBarcode, Search } from "lucide-react";
 import { addProduct, getProductByBarcode, listProducts, matchProductByName } from "@/lib/db/products";
 import type { Product } from "@/lib/db/schema";
 import type { ProductGuess } from "@/lib/ai/types";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
-import { PhotoCapture } from "@/components/PhotoCapture";
 import { ProductPicker } from "@/components/ProductPicker";
 import { Card } from "@/components/ui/Card";
 import { buttonStyles } from "@/components/ui/button";
@@ -17,8 +16,14 @@ interface ScanToSellProps {
   onAddProduct: (product: Product) => void;
 }
 
-/** One tap switches how the shopkeeper is finding the next item — never more than one screen away from any of the three. */
-type Mode = "barcode" | "photo" | "search";
+/**
+ * One tap switches between the two ways of finding the next item. "Scan"
+ * is a single camera view that does double duty — barcode auto-detection
+ * runs continuously in the background, and a shutter button (owned by
+ * `BarcodeScanner` itself) captures a photo for Gemma identification
+ * without ever leaving that view or handing off to a separate screen.
+ */
+type Mode = "scan" | "search";
 
 type QuickAddOrigin = "barcode" | "photo";
 
@@ -60,25 +65,28 @@ async function quickAddProduct(
 }
 
 /**
- * The supermarket-cashier item-finding loop for the sell page: Barcode,
- * Photo, and Search are three always-visible tabs (one tap between any of
- * them), each funneling into the same resolution pipeline so the sell page
- * itself only ever sees finished `Product`s via `onAddProduct`:
+ * The supermarket-cashier item-finding loop for the sell page: Scan and
+ * Search are two always-visible tabs (one tap between them), each funneling
+ * into the same resolution pipeline so the sell page itself only ever sees
+ * finished `Product`s via `onAddProduct`. Scan mode is itself a single
+ * camera view with three ways to resolve an item, not three separate
+ * screens — barcode auto-detection and the photo shutter share one live
+ * stream (see `BarcodeScanner`):
  *
  * 1. Barcode already in this shop's stock (`getProductByBarcode`) — instant.
  * 2. Barcode not in stock — `/api/barcode-lookup` (Open Food Facts, then
  *    UPCitemdb) suggests a name; the shopkeeper only has to confirm a price
  *    (pre-filled when the source already supplied one).
- * 3. No barcode readable — a typed barcode number, or a photo through Gemma
- *    (`/api/identify-product`), either matches an existing product by name
- *    (`matchProductByName`) or seeds the same quick-add price prompt —
- *    pre-filled with Gemma's own price estimate when it has one, so a
- *    visible price tag in the photo means the shopkeeper often doesn't have
- *    to type a price at all.
+ * 3. No barcode readable — a typed barcode number, or the shutter button's
+ *    photo through Gemma (`/api/identify-product`), either matches an
+ *    existing product by name (`matchProductByName`) or seeds the same
+ *    quick-add price prompt — pre-filled with Gemma's own price estimate
+ *    when it has one, so a visible price tag in the photo means the
+ *    shopkeeper often doesn't have to type a price at all.
  */
 export function ScanToSell({ onAddProduct }: ScanToSellProps) {
   const t = useTranslations("scanSell");
-  const [mode, setMode] = useState<Mode>("barcode");
+  const [mode, setMode] = useState<Mode>("scan");
   const [overlay, setOverlayState] = useState<Overlay>({ kind: "none" });
   const [manualBarcodeOpen, setManualBarcodeOpen] = useState(false);
   const [justAdded, setJustAdded] = useState<{ name: string; at: number } | null>(null);
@@ -184,21 +192,20 @@ export function ScanToSell({ onAddProduct }: ScanToSellProps) {
   }
 
   const modeTabs: { mode: Mode; label: string; icon: typeof ScanBarcode }[] = [
-    { mode: "barcode", label: t("modeBarcode"), icon: ScanBarcode },
-    { mode: "photo", label: t("modePhoto"), icon: Camera },
+    { mode: "scan", label: t("modeScan"), icon: ScanBarcode },
     { mode: "search", label: t("modeSearch"), icon: Search },
   ];
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {modeTabs.map(({ mode: tabMode, label, icon: Icon }) => (
           <button
             key={tabMode}
             type="button"
             onClick={() => switchMode(tabMode)}
             aria-pressed={mode === tabMode}
-            className={`flex items-center justify-center gap-1.5 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
               mode === tabMode
                 ? "border-green-600 bg-green-600/10 text-green-500"
                 : "border-zinc-800 text-zinc-400"
@@ -210,10 +217,14 @@ export function ScanToSell({ onAddProduct }: ScanToSellProps) {
         ))}
       </div>
 
-      {mode === "barcode" && (
+      {mode === "scan" && (
         <div className="flex flex-col items-center gap-3">
-          <div className="relative min-h-72 w-full">
-            <BarcodeScanner onDetect={handleDetect} onManualEntry={() => switchMode("search")} />
+          <div className="relative w-full">
+            <BarcodeScanner
+              onDetect={handleDetect}
+              onCapturePhoto={handlePhoto}
+              onManualEntry={() => switchMode("search")}
+            />
             {overlay.kind !== "none" && (
               <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/85 p-4">
                 <OverlayContent
@@ -238,27 +249,11 @@ export function ScanToSell({ onAddProduct }: ScanToSellProps) {
             <button
               type="button"
               onClick={() => setManualBarcodeOpen(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 underline underline-offset-2"
+              className="flex items-center gap-1.5 py-1.5 text-sm font-medium text-zinc-400 underline underline-offset-2"
             >
               <Keyboard size={14} />
               {t("typeBarcodeButton")}
             </button>
-          )}
-        </div>
-      )}
-
-      {mode === "photo" && (
-        <div className="relative min-h-72 w-full">
-          <PhotoCapture onCapture={handlePhoto} />
-          {overlay.kind !== "none" && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-3xl bg-black/85 p-4">
-              <OverlayContent
-                overlay={overlay}
-                onAdd={confirmAdded}
-                onCancel={() => setOverlay({ kind: "none" })}
-                t={t}
-              />
-            </div>
           )}
         </div>
       )}
@@ -378,7 +373,7 @@ function QuickAddCard({
         <button type="submit" disabled={saving} className={buttonStyles("primary", "lg", "mt-1 w-full")}>
           {t("addToSaleButton")}
         </button>
-        <button type="button" onClick={onCancel} className="text-sm text-zinc-500 underline underline-offset-2">
+        <button type="button" onClick={onCancel} className="py-1.5 text-sm text-zinc-500 underline underline-offset-2">
           {t("cancelButton")}
         </button>
       </form>
@@ -428,7 +423,7 @@ function ManualBarcodeForm({
         <button type="submit" className={buttonStyles("primary", "md", "flex-1")}>
           {t("manualBarcodeSubmit")}
         </button>
-        <button type="button" onClick={onCancel} className="text-sm text-zinc-500 underline underline-offset-2">
+        <button type="button" onClick={onCancel} className="py-1.5 text-sm text-zinc-500 underline underline-offset-2">
           {t("cancelButton")}
         </button>
       </div>

@@ -52,11 +52,11 @@
     "starting": "Starting camera…",
     "permissionDenied": "Camera access was denied. You can still add this product manually.",
     "enterManually": "Enter manually",
-    "enterManuallyInstead": "Enter manually instead"
+    "enterManuallyInstead": "Enter manually instead",
+    "captureButtonLabel": "No barcode? Take a photo of this item"
   },
   "scanSell": {
-    "modeBarcode": "Barcode",
-    "modePhoto": "Photo",
+    "modeScan": "Scan",
     "modeSearch": "Search",
     "addedMessage": "Added {name}",
     "typeBarcodeButton": "Can't scan it? Type the number",
