@@ -24,11 +24,25 @@ declare const self: ServiceWorkerGlobalScope;
  * `ignoreSearch: true` makes the cache lookup match on pathname alone,
  * fixing this without touching any of `defaultCache`'s other tuning
  * (expiration, plugins, etc. all pass through the untouched instances).
+ *
+ * `ignoreSearch` alone turned out not to be sufficient (found live: a
+ * direct `cache.match(url, {ignoreSearch: true})` against a real cached
+ * RSC entry still returned no match). Next's RSC responses carry a
+ * `Vary` header (they differ by request headers like `RSC` /
+ * `Next-Router-State-Tree`, not just the URL), and the Cache API's
+ * `ignoreSearch` only affects the URL comparison — it still enforces
+ * `Vary`-listed request headers matching unless `ignoreVary` is also
+ * set. `ignoreVary: true` makes the lookup match on pathname alone,
+ * regardless of which request headers produced the cached entry.
  */
 const NAVIGATION_CACHE_NAMES = new Set(["pages-rsc-prefetch", "pages-rsc", "pages"]);
 for (const entry of defaultCache) {
   if (entry.handler instanceof Strategy && NAVIGATION_CACHE_NAMES.has(entry.handler.cacheName)) {
-    entry.handler.matchOptions = { ...entry.handler.matchOptions, ignoreSearch: true };
+    entry.handler.matchOptions = {
+      ...entry.handler.matchOptions,
+      ignoreSearch: true,
+      ignoreVary: true,
+    };
   }
 }
 

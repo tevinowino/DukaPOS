@@ -57,7 +57,16 @@ export function AppIntlProvider({
 
   return (
     <LocaleToggleContext.Provider value={{ locale, setLocale }}>
-      <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]}>
+      <NextIntlClientProvider
+        locale={locale}
+        messages={MESSAGES[locale]}
+        // DukaPOS is Kenya-only (PRD §2) — a fixed timezone here must
+        // match `src/i18n/request.ts`'s server-side config exactly, or
+        // date/time formatting (e.g. SyncStatusBar's "last synced at")
+        // would mismatch between server-rendered and client-rendered
+        // output depending on which timezone the hosting machine runs in.
+        timeZone="Africa/Nairobi"
+      >
         {children}
       </NextIntlClientProvider>
     </LocaleToggleContext.Provider>

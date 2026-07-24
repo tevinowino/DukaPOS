@@ -4,9 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLiveQuery } from "dexie-react-hooks";
+import { Sparkles } from "lucide-react";
 import { listProducts, applyStockDelta } from "@/lib/db/products";
 import { useOnlineSync } from "@/lib/sync/useOnlineSync";
 import type { StockUpdate } from "@/lib/ai/types";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
+import { buttonStyles } from "@/components/ui/button";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 interface EditableLine extends StockUpdate {
   /** Stable React key independent of array index, since removing a line shifts indices. */
@@ -110,108 +115,120 @@ export default function StockUpdatePage() {
     .length ?? 0;
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4">
-      <Link href="/" className="text-sm underline">
-        {t("backToHome")}
-      </Link>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+    <>
+      <Screen size="wide" padBottomNav>
+        <Link href="/" className="text-sm text-zinc-400 underline underline-offset-2">
+          {t("backToHome")}
+        </Link>
+        <h1 className="text-2xl font-semibold text-white">{t("title")}</h1>
 
-      <textarea
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        placeholder={t("placeholder")}
-        aria-label={t("inputLabel")}
-        rows={3}
-        className="w-full max-w-sm rounded border px-3 py-2 text-base"
-      />
-      <button
-        type="button"
-        onClick={handleParse}
-        disabled={!text.trim() || status === "parsing"}
-        className="w-full max-w-sm rounded bg-zinc-900 py-3 text-base font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-      >
-        {status === "parsing" ? t("parsing") : t("parseButton")}
-      </button>
+        <Card variant="light" className="p-5">
+          <textarea
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder={t("placeholder")}
+            aria-label={t("inputLabel")}
+            rows={3}
+            className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-base text-zinc-900 outline-none focus:border-green-600 focus:bg-white"
+          />
+          <button
+            type="button"
+            onClick={handleParse}
+            disabled={!text.trim() || status === "parsing"}
+            className={buttonStyles("primary", "lg", "mt-3 w-full gap-2")}
+          >
+            <Sparkles size={16} />
+            {status === "parsing" ? t("parsing") : t("parseButton")}
+          </button>
+        </Card>
 
-      {status === "parseFailed" && (
-        <p role="alert" className="text-sm text-red-600">
-          {t("parseFailedMessage")}
-        </p>
-      )}
-
-      {status === "offline" && (
-        <p role="alert" className="text-sm text-amber-600">
-          {t("offlineMessage")}
-        </p>
-      )}
-
-      {lines && lines.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {lines.map((line) => {
-            const matchedProduct = line.productId
-              ? products.find((product) => product.id === line.productId)
-              : undefined;
-            return (
-              <li key={line.key} className="flex flex-col gap-2 rounded border p-3">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">{matchedProduct?.name ?? line.productNameGuess}</p>
-                  <span className="text-sm">
-                    {line.direction === "increase" ? "+" : "−"}
-                  </span>
-                </div>
-                {!line.productId && (
-                  <p className="text-sm text-amber-600">
-                    {t("unmatchedProduct")}{" "}
-                    <Link href="/products/new" className="underline">
-                      {t("addProductLink")}
-                    </Link>
-                  </p>
-                )}
-                <input
-                  type="number"
-                  min={1}
-                  value={line.quantityDelta ?? ""}
-                  onChange={(event) => updateQuantity(line.key, event.target.value)}
-                  aria-label={t("quantityLabel", { name: line.productNameGuess })}
-                  placeholder={t("quantityPlaceholder")}
-                  className="w-24 rounded border px-2 py-1 text-center"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeLine(line.key)}
-                  className="self-start text-sm text-red-600 underline"
-                >
-                  {t("removeButton")}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {lines && lines.length > 0 && (
-        <button
-          type="button"
-          onClick={handleApply}
-          disabled={readyCount === 0}
-          className="w-full max-w-sm rounded bg-zinc-900 py-3 text-base font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          {t("applyButton", { count: readyCount })}
-        </button>
-      )}
-
-      {applyResult && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-green-700 dark:text-green-400">
-            {t("applySuccess", { count: applyResult.applied })}
+        {status === "parseFailed" && (
+          <p role="alert" className="text-sm text-red-400">
+            {t("parseFailedMessage")}
           </p>
-          {applyResult.lineErrors.map((message) => (
-            <p key={message} role="alert" className="text-sm text-red-600">
-              {message}
-            </p>
-          ))}
-        </div>
-      )}
-    </main>
+        )}
+
+        {status === "offline" && (
+          <p role="alert" className="text-sm text-amber-400">
+            {t("offlineMessage")}
+          </p>
+        )}
+
+        {lines && lines.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {lines.map((line) => {
+              const matchedProduct = line.productId
+                ? products.find((product) => product.id === line.productId)
+                : undefined;
+              return (
+                <li key={line.key}>
+                  <Card className="flex flex-col gap-2 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-zinc-100">
+                        {matchedProduct?.name ?? line.productNameGuess}
+                      </p>
+                      <span
+                        className={`text-sm font-semibold ${
+                          line.direction === "increase" ? "text-green-500" : "text-red-400"
+                        }`}
+                      >
+                        {line.direction === "increase" ? "+" : "−"}
+                      </span>
+                    </div>
+                    {!line.productId && (
+                      <p className="text-sm text-amber-400">
+                        {t("unmatchedProduct")}{" "}
+                        <Link href="/products/new" className="underline">
+                          {t("addProductLink")}
+                        </Link>
+                      </p>
+                    )}
+                    <input
+                      type="number"
+                      min={1}
+                      value={line.quantityDelta ?? ""}
+                      onChange={(event) => updateQuantity(line.key, event.target.value)}
+                      aria-label={t("quantityLabel", { name: line.productNameGuess })}
+                      placeholder={t("quantityPlaceholder")}
+                      className="w-24 rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1 text-center text-zinc-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeLine(line.key)}
+                      className="self-start text-sm text-red-400 underline"
+                    >
+                      {t("removeButton")}
+                    </button>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {lines && lines.length > 0 && (
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={readyCount === 0}
+            className={buttonStyles("primary", "lg", "w-full")}
+          >
+            {t("applyButton", { count: readyCount })}
+          </button>
+        )}
+
+        {applyResult && (
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-green-500">{t("applySuccess", { count: applyResult.applied })}</p>
+            {applyResult.lineErrors.map((message) => (
+              <p key={message} role="alert" className="text-sm text-red-400">
+                {message}
+              </p>
+            ))}
+          </div>
+        )}
+      </Screen>
+      <BottomNav />
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getShopProfile } from "@/lib/identity/shopIdentity";
 import { useOnlineSync } from "@/lib/sync/useOnlineSync";
-import { LocaleToggle } from "./LocaleToggle";
+import { AppHeader } from "./ui/AppHeader";
 import { LockScreen } from "./LockScreen";
 import { OfflineIndicator } from "./OfflineIndicator";
 import { OnboardingScreen } from "./OnboardingScreen";
@@ -21,10 +21,10 @@ type GateStatus = "loading" | "needsOnboarding" | "locked" | "unlocked";
  * navigability, but this component is the actual enforcement mechanism and
  * works the same regardless of which URL was requested.
  *
- * `LocaleToggle` renders unconditionally, above every gate state — a
- * shopkeeper who reads Swahili, not English, needs to be able to switch
- * languages *before* they can get through onboarding or the PIN screen,
- * not only after.
+ * `AppHeader` (wordmark + `LocaleToggle`) renders unconditionally, above
+ * every gate state — a shopkeeper who reads Swahili, not English, needs to
+ * be able to switch languages *before* they can get through onboarding or
+ * the PIN screen, not only after.
  *
  * `useOnlineSync` is called exactly once here and passed down to
  * `OfflineIndicator`/`SyncStatusBar` as props, rather than each calling it
@@ -55,7 +55,7 @@ export function AppLockGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <LocaleToggle />
+      <AppHeader />
       {status === "needsOnboarding" && (
         <OnboardingScreen onComplete={() => setStatus("unlocked")} />
       )}

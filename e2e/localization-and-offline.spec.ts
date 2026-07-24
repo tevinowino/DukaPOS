@@ -85,7 +85,9 @@ test("toggling to Swahili updates every major screen, and the toggle keeps worki
   await page.getByRole("link", { name: "← Nyumbani" }).click();
   await clickLinkTolerateRelock(page, "Uuzaji mpya");
   await expect(page.getByRole("heading", { name: "Uuzaji mpya" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ongeza bidhaa" })).toBeVisible();
+  // New sale shows the Barcode/Photo/Search mode tabs — assert the
+  // Swahili "Tafuta" (Search) tab is present and translated.
+  await expect(page.getByRole("button", { name: "Tafuta", exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "← Nyumbani" }).click();
   await clickLinkTolerateRelock(page, "Sasisha bidhaa (maandishi)");

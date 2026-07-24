@@ -4,9 +4,13 @@ import {
   addProduct,
   deleteProduct,
   getProductByBarcode,
+  getStockStatus,
+  isAvailable,
   listProducts,
+  matchProductByName,
   updateProduct,
 } from "./products";
+import type { Product } from "./schema";
 
 describe("products", () => {
   beforeEach(async () => {
@@ -108,5 +112,62 @@ describe("products", () => {
 
   it("getProductByBarcode returns undefined for a barcode nothing was saved with", async () => {
     expect(await getProductByBarcode("0000000000000")).toBeUndefined();
+  });
+
+  it("getStockStatus classifies 0 as out, 1 through 5 as low, and 6+ as good", () => {
+    expect(getStockStatus(0)).toBe("out");
+    expect(getStockStatus(1)).toBe("low");
+    expect(getStockStatus(5)).toBe("low");
+    expect(getStockStatus(6)).toBe("good");
+    expect(getStockStatus(200)).toBe("good");
+  });
+
+  it("isAvailable treats an undefined `available` field as available (pre-migration products)", () => {
+    const product: Product = {
+      id: "p1",
+      name: "Sugar 1kg",
+      category: "Groceries",
+      priceKES: 100,
+      stockQty: 10,
+      source: "manual",
+    };
+    expect(isAvailable(product)).toBe(true);
+  });
+
+  it("isAvailable respects an explicit true/false `available` field", () => {
+    const base: Product = {
+      id: "p1",
+      name: "Sugar 1kg",
+      category: "Groceries",
+      priceKES: 100,
+      stockQty: 10,
+      source: "manual",
+    };
+    expect(isAvailable({ ...base, available: true })).toBe(true);
+    expect(isAvailable({ ...base, available: false })).toBe(false);
+  });
+
+  describe("matchProductByName", () => {
+    const products: Product[] = [
+      { id: "p1", name: "Red Bull 250ml", category: "Drinks", priceKES: 150, stockQty: 10, source: "barcode" },
+      { id: "p2", name: "Blueband Margarine 500g", category: "Groceries", priceKES: 320, stockQty: 5, source: "barcode" },
+      { id: "p3", name: "Matchbox", category: "Household", priceKES: 10, stockQty: 40, source: "manual" },
+    ];
+
+    it("returns the exact case-insensitive name match when one exists", () => {
+      expect(matchProductByName("red bull 250ml", products)).toEqual(products[0]);
+    });
+
+    it("returns the product sharing the most word-tokens when there's no exact match", () => {
+      expect(matchProductByName("Blueband Margarine", products)).toEqual(products[1]);
+    });
+
+    it("returns undefined when no product shares any word-token with the guess", () => {
+      expect(matchProductByName("Cooking Oil 1L", products)).toBeUndefined();
+    });
+
+    it("returns undefined for an empty product list", () => {
+      expect(matchProductByName("Red Bull", [])).toBeUndefined();
+    });
   });
 });

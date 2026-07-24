@@ -32,7 +32,7 @@ export function OfflineIndicator({ status }: { status: SyncStatus }) {
   return (
     <div
       role="status"
-      className="bg-amber-100 px-4 py-1 text-center text-xs font-medium text-amber-900 dark:bg-amber-900 dark:text-amber-100"
+      className="bg-amber-500/15 px-4 py-1 text-center text-xs font-medium text-amber-400"
     >
       {t("offlineBadge")}
     </div>

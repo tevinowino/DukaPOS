@@ -3,6 +3,11 @@
     "english": "EN",
     "swahili": "SW"
   },
+  "bottomNav": {
+    "sales": "Mauzo",
+    "inventory": "Bidhaa",
+    "reports": "Ripoti"
+  },
   "pinPad": {
     "digitsEntered": "Tarakimu {entered} kati ya {length} zimewekwa",
     "backspace": "Futa nyuma"
@@ -17,7 +22,15 @@
     "viewStockButton": "Angalia bidhaa",
     "viewSalesButton": "Rekodi za mauzo",
     "stockUpdateButton": "Sasisha bidhaa (maandishi)",
-    "summaryButton": "Muhtasari wa leo"
+    "summaryButton": "Muhtasari wa leo",
+    "todaysSales": "Mauzo ya Leo",
+    "totalRevenue": "Jumla ya mapato",
+    "stockHealth": "Hali ya Bidhaa",
+    "stockGood": "Nzuri",
+    "stockLow": "Chache",
+    "stockOut": "Zimeisha",
+    "recentActivity": "Shughuli za Hivi Karibuni",
+    "noSalesToday": "Hakuna mauzo yaliyorekodiwa leo bado."
   },
   "onboarding": {
     "title": "Weka duka lako",
@@ -41,6 +54,27 @@
     "enterManually": "Weka mwenyewe",
     "enterManuallyInstead": "Weka mwenyewe badala yake"
   },
+  "scanSell": {
+    "modeBarcode": "Barcode",
+    "modePhoto": "Picha",
+    "modeSearch": "Tafuta",
+    "addedMessage": "{name} imeongezwa",
+    "typeBarcodeButton": "Haiwezi kuchanganuliwa? Andika namba",
+    "manualBarcodeLabel": "Namba ya barcode",
+    "manualBarcodeSubmit": "Tafuta",
+    "manualBarcodeInvalid": "Barcode inapaswa kuwa nambari pekee",
+    "lookingUp": "Haipo stokini bado — inaangalia hifadhidata za bidhaa…",
+    "identifyingPhoto": "Inatambua bidhaa…",
+    "foundTitle": "Imepatikana: {name}",
+    "newProductTitle": "Bidhaa mpya — haipo stokini bado",
+    "nameLabel": "Jina la bidhaa",
+    "priceLabel": "Bei ya kuuza (KES)",
+    "priceFromPhotoHint": "Bei imesomwa kutoka kwenye picha — hakikisha ni sahihi",
+    "nameRequired": "Weka jina la bidhaa",
+    "priceInvalid": "Weka bei sahihi (KES nzima, 0 au zaidi)",
+    "addToSaleButton": "Ongeza kwenye uuzaji",
+    "cancelButton": "Ghairi"
+  },
   "products": {
     "title": "Bidhaa",
     "backToHome": "← Nyumbani",
@@ -50,6 +84,12 @@
     "emptyBody": "Ongeza bidhaa yako ya kwanza ili kuanza.",
     "inStock": "{count} zipo stokini",
     "outOfStock": "Hazipo stokini",
+    "unavailableBadge": "Haipatikani",
+    "searchPlaceholder": "Tafuta bidhaa…",
+    "filterAll": "Zote",
+    "filterLowStock": "Chache",
+    "filterOutOfStock": "Zimeisha",
+    "noResultsFound": "Hakuna bidhaa zinazolingana na utafutaji wako.",
     "newTitle": "Ongeza bidhaa",
     "scanBarcodeButton": "Changanua barcode",
     "addViaPhotoButton": "Ongeza kwa picha",
@@ -73,13 +113,13 @@
     "priceInvalid": "Weka bei sahihi (KES nzima, 0 au zaidi)",
     "stockInvalid": "Weka idadi sahihi (nambari nzima, 0 au zaidi)",
     "barcodeInvalid": "Barcode inapaswa kuwa nambari pekee",
+    "availableLabel": "Inapatikana kuuzwa",
     "saveButton": "Hifadhi bidhaa",
     "saveChangesButton": "Hifadhi mabadiliko"
   },
   "sell": {
     "title": "Uuzaji mpya",
     "backToHome": "← Nyumbani",
-    "addProductButton": "Ongeza bidhaa",
     "searchPlaceholder": "Tafuta bidhaa…",
     "quantityLabel": "Idadi ya {name}",
     "removeButton": "Ondoa",
@@ -96,7 +136,10 @@
     "backToHome": "← Nyumbani",
     "prevDay": "← Siku iliyopita",
     "nextDay": "Siku inayofuata →",
-    "emptyState": "Hakuna mauzo yaliyorekodiwa kwa siku hii."
+    "emptyState": "Hakuna mauzo yaliyorekodiwa kwa siku hii.",
+    "paymentBreakdownTitle": "Kwa njia ya malipo",
+    "cashCount": "Mauzo {count} ya taslimu",
+    "mpesaCount": "Mauzo {count} ya M-Pesa"
   },
   "sync": {
     "offline": "Haiko mtandaoni — mabadiliko yatasawazishwa ukiwa mtandaoni tena",
@@ -142,7 +185,12 @@
     "regenerateButton": "Tengeneza upya",
     "generating": "Inatengeneza muhtasari…",
     "errorMessage": "Imeshindikana kutengeneza muhtasari — jaribu tena",
-    "offlineMessage": "Muhtasari unahitaji mtandao — tutajaribu tena ukiwa mtandaoni tena"
+    "offlineMessage": "Muhtasari unahitaji mtandao — tutajaribu tena ukiwa mtandaoni tena",
+    "totalSales": "Jumla ya Mauzo",
+    "vsYesterday": "{percent} kuliko jana",
+    "topMover": "Bidhaa Inayoongoza",
+    "unitsSold": "Vipande {count} Vimeuzwa",
+    "noSalesYet": "Hakuna mauzo bado leo"
   },
   "mpesaCheckout": {
     "title": "Lipa kwa M-Pesa",

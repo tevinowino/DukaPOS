@@ -67,7 +67,8 @@ test("pay with M-Pesa for a single item, observe the waiting screen, and see sto
 
   await page.getByRole("link", { name: "← Home" }).click();
   await page.getByRole("link", { name: "New sale" }).click();
-  await page.getByRole("button", { name: "Add product" }).click();
+  // New sale defaults to the Barcode tab (no camera in CI) — switch to the Search tab.
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.getByText("Sugar 1kg").click();
 
   await page.getByRole("button", { name: "M-Pesa" }).click();

@@ -4,9 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Banknote, Minus, Plus, Smartphone, X } from "lucide-react";
 import { recordCashSale } from "@/lib/db/transactions";
 import type { Product } from "@/lib/db/schema";
-import { ProductPicker } from "@/components/ProductPicker";
+import { ScanToSell } from "@/components/ScanToSell";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
+import { buttonStyles } from "@/components/ui/button";
 
 interface SaleLine {
   product: Product;
@@ -19,11 +23,9 @@ export default function SellPage() {
   const t = useTranslations("sell");
   const router = useRouter();
   const [lines, setLines] = useState<SaleLine[]>([]);
-  const [picking, setPicking] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
 
-  function addProduct(product: Product) {
-    setPicking(false);
+  function addLineForProduct(product: Product) {
     setLines((prev) => {
       const existing = prev.find((line) => line.product.id === product.id);
       if (existing) {
@@ -73,78 +75,88 @@ export default function SellPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4">
-      <Link href="/" className="text-sm underline">
+    <Screen size="narrow">
+      <Link href="/" className="text-sm text-zinc-400 underline underline-offset-2">
         {t("backToHome")}
       </Link>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <h1 className="text-2xl font-semibold text-white">{t("title")}</h1>
 
-      {picking ? (
-        <ProductPicker onSelect={addProduct} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setPicking(true)}
-          className="rounded border py-3 text-base font-medium"
-        >
-          {t("addProductButton")}
-        </button>
-      )}
+      <ScanToSell onAddProduct={addLineForProduct} />
 
       {lines.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <Card className="divide-y divide-zinc-800 p-2">
           {lines.map((line) => {
             const overStock = line.quantity > line.product.stockQty;
             return (
-              <li
-                key={line.product.id}
-                className="flex items-center justify-between rounded border px-3 py-3"
-              >
-                <div>
-                  <p className="font-medium">{line.product.name}</p>
+              <div key={line.product.id} className="flex items-center justify-between gap-2 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-zinc-100">{line.product.name}</p>
+                  <p className="text-xs text-zinc-500">KSh {line.product.priceKES.toLocaleString()}</p>
                   {overStock && (
-                    <p className="text-sm text-amber-600">
+                    <p className="text-xs text-amber-500">
                       {t("lowStockWarning", { count: line.product.stockQty })}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(line.product.id, line.quantity - 1)}
+                    aria-label={`-1 ${line.product.name}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                  >
+                    <Minus size={14} />
+                  </button>
                   <input
                     type="number"
                     min={1}
                     value={line.quantity}
                     onChange={(e) => updateQuantity(line.product.id, Number(e.target.value))}
                     aria-label={t("quantityLabel", { name: line.product.name })}
-                    className="w-16 rounded border px-2 py-1 text-center"
+                    className="w-12 rounded-lg border border-zinc-800 bg-zinc-900 py-1 text-center text-zinc-100"
                   />
                   <button
                     type="button"
-                    onClick={() => removeLine(line.product.id)}
-                    className="text-sm text-red-600 underline"
+                    onClick={() => updateQuantity(line.product.id, line.quantity + 1)}
+                    aria-label={`+1 ${line.product.name}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                   >
-                    {t("removeButton")}
+                    <Plus size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeLine(line.product.id)}
+                    aria-label={t("removeButton")}
+                    className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-red-400 hover:bg-red-500/10"
+                  >
+                    <X size={16} />
                   </button>
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </Card>
       )}
 
-      <p className="text-lg font-semibold">{t("totalLabel", { total: total.toLocaleString() })}</p>
+      <Card className="px-4 py-3.5">
+        <p className="text-lg font-semibold text-white">
+          {t("totalLabel", { total: total.toLocaleString() })}
+        </p>
+      </Card>
 
       <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setPaymentMethod("cash")}
             aria-pressed={paymentMethod === "cash"}
-            className={
+            className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition-colors ${
               paymentMethod === "cash"
-                ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "rounded border px-4 py-2 text-sm font-medium"
-            }
+                ? "border-green-600 bg-green-600/10 text-green-500"
+                : "border-zinc-800 text-zinc-300"
+            }`}
           >
+            <Banknote size={16} />
             {t("paymentCash")}
           </button>
           <button
@@ -152,28 +164,27 @@ export default function SellPage() {
             onClick={() => setPaymentMethod("mpesa")}
             disabled={!mpesaEligible}
             aria-pressed={paymentMethod === "mpesa"}
-            className={
+            className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition-colors disabled:opacity-40 ${
               paymentMethod === "mpesa"
-                ? "rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-                : "rounded border px-4 py-2 text-sm font-medium disabled:opacity-50"
-            }
+                ? "border-green-600 bg-green-600/10 text-green-500"
+                : "border-zinc-800 text-zinc-300"
+            }`}
           >
+            <Smartphone size={16} />
             {t("paymentMpesa")}
           </button>
         </div>
-        {!mpesaEligible && (
-          <p className="text-sm text-zinc-500">{t("mpesaSingleItemOnly")}</p>
-        )}
+        {!mpesaEligible && <p className="text-sm text-zinc-500">{t("mpesaSingleItemOnly")}</p>}
       </div>
 
       <button
         type="button"
         onClick={handleConfirm}
         disabled={!canConfirm}
-        className="rounded bg-zinc-900 py-3 text-base font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonStyles("primary", "lg", "w-full")}
       >
         {paymentMethod === "mpesa" ? t("payWithMpesaButton") : t("confirmButton")}
       </button>
-    </main>
+    </Screen>
   );
 }

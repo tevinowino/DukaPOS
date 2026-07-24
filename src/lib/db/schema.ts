@@ -19,6 +19,15 @@ export interface Product {
   /** Integer, never negative. */
   stockQty: number;
   source: "barcode" | "photo" | "manual";
+  /**
+   * Whether the shopkeeper currently stocks this product at all — distinct
+   * from `stockQty` (a count can be 0 while the item is still "available",
+   * just needing restock). Omitted (`undefined`) means available, so every
+   * product saved before this field existed needs no migration and no
+   * `version()` bump — see `isAvailable` in `products.ts`, the one place
+   * that reads this field.
+   */
+  available?: boolean;
 }
 
 /**

@@ -11,5 +11,11 @@ export default getRequestConfig(async ({ requestLocale }) => {
   return {
     locale,
     messages: (await import(`../../messages/${locale}.json`)).default,
+    // DukaPOS is Kenya-only (PRD §2) — a fixed timezone, not the server's
+    // local one, keeps date/time formatting (e.g. SyncStatusBar's "last
+    // synced at", the transactions log's day header) identical between
+    // server-rendered and client-rendered output regardless of which
+    // timezone the hosting machine happens to run in.
+    timeZone: "Africa/Nairobi",
   };
 });

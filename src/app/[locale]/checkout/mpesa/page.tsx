@@ -3,10 +3,14 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { CheckCircle2, Clock, Loader2, Smartphone } from "lucide-react";
 import { getProduct, applyStockDelta } from "@/lib/db/products";
 import { getShopProfile } from "@/lib/identity/shopIdentity";
 import { db, type Product } from "@/lib/db/schema";
 import { enqueue } from "@/lib/sync/queue";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
+import { buttonStyles } from "@/components/ui/button";
 
 /** Per ADR-3: poll every 3s, give up (not fail — the payment may still complete later) after 90s. */
 const POLL_INTERVAL_MS = 3_000;
@@ -174,85 +178,97 @@ export default function MpesaCheckoutPage({
 
   if (phase === "error") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p role="alert" className="text-sm text-red-600">
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <p role="alert" className="text-sm text-red-400">
           {errorMessage ?? t("genericError")}
         </p>
-        <Link href="/sell" className="text-sm underline">
+        <Link href="/sell" className="text-sm text-zinc-400 underline underline-offset-2">
           {t("backToSale")}
         </Link>
-      </main>
+      </Screen>
     );
   }
 
   if (phase === "enterPhone" && product) {
     const total = product.priceKES * quantity;
     return (
-      <main className="flex flex-1 flex-col items-center gap-4 p-4">
-        <Link href="/sell" className="self-start text-sm underline">
+      <Screen size="narrow" className="items-center">
+        <Link
+          href="/sell"
+          className="self-start text-sm text-zinc-400 underline underline-offset-2"
+        >
           {t("backToSale")}
         </Link>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {t("summary", { name: product.name, quantity, total: total.toLocaleString() })}
-        </p>
-        <label className="flex w-full max-w-sm flex-col gap-1 text-sm">
-          {t("phoneLabel")}
-          <input
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            inputMode="tel"
-            className="rounded border px-3 py-2 text-base"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={handleInitiate}
-          disabled={!phone.trim()}
-          className="w-full max-w-sm rounded bg-zinc-900 py-3 text-base font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          {t("sendPushButton")}
-        </button>
-      </main>
+        <h1 className="text-2xl font-semibold text-white">{t("title")}</h1>
+        <Card variant="light" className="w-full px-6 py-8">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-green-500/15 text-green-600">
+              <Smartphone size={20} />
+            </span>
+            <p className="text-sm text-zinc-600">
+              {t("summary", { name: product.name, quantity, total: total.toLocaleString() })}
+            </p>
+          </div>
+          <label className="flex flex-col gap-1.5 text-left text-sm font-medium text-zinc-700">
+            {t("phoneLabel")}
+            <input
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              inputMode="tel"
+              className="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-base text-zinc-900 outline-none focus:border-green-600 focus:bg-white"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleInitiate}
+            disabled={!phone.trim()}
+            className={buttonStyles("primary", "lg", "mt-4 w-full")}
+          >
+            {t("sendPushButton")}
+          </button>
+        </Card>
+      </Screen>
     );
   }
 
   if (phase === "initiating") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-sm text-zinc-500">{t("initiating")}</p>
-      </main>
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <Loader2 size={28} className="animate-spin text-green-500" />
+        <p className="text-sm text-zinc-400">{t("initiating")}</p>
+      </Screen>
     );
   }
 
   if (phase === "waiting") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-lg font-medium">{t("waitingTitle")}</p>
-        <p className="text-sm text-zinc-500">{t("waitingBody")}</p>
-      </main>
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <Loader2 size={28} className="animate-spin text-green-500" />
+        <p className="text-lg font-medium text-white">{t("waitingTitle")}</p>
+        <p className="text-sm text-zinc-400">{t("waitingBody")}</p>
+      </Screen>
     );
   }
 
   if (phase === "timeout") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-sm text-amber-600">{t("timeoutMessage")}</p>
-        <Link href="/" className="text-sm underline">
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <Clock size={28} className="text-amber-500" />
+        <p className="text-sm text-amber-400">{t("timeoutMessage")}</p>
+        <Link href="/" className="text-sm text-zinc-400 underline underline-offset-2">
           {t("backToHome")}
         </Link>
-      </main>
+      </Screen>
     );
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <p className="text-lg font-medium text-green-700 dark:text-green-400">
-        {t("successMessage")}
-      </p>
-      <Link href="/" className="text-sm underline">
+    <Screen size="narrow" className="items-center justify-center text-center">
+      <CheckCircle2 size={28} className="text-green-500" />
+      <p className="text-lg font-medium text-green-400">{t("successMessage")}</p>
+      <Link href="/" className="text-sm text-zinc-400 underline underline-offset-2">
         {t("backToHome")}
       </Link>
-    </main>
+    </Screen>
   );
 }

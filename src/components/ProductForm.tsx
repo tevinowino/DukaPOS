@@ -9,6 +9,7 @@ export interface ProductFormValues {
   barcode?: string;
   priceKES: number;
   stockQty: number;
+  available: boolean;
 }
 
 interface ProductFormProps {
@@ -47,6 +48,7 @@ export function ProductForm({ mode, initialValues, onSubmit }: ProductFormProps)
   const [stockQty, setStockQty] = useState(
     initialValues?.stockQty !== undefined ? String(initialValues.stockQty) : "",
   );
+  const [available, setAvailable] = useState(initialValues?.available ?? true);
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent) {
@@ -82,53 +84,63 @@ export function ProductForm({ mode, initialValues, onSubmit }: ProductFormProps)
       barcode: trimmedBarcode || undefined,
       priceKES: price,
       stockQty: stock,
+      available,
     });
   }
 
+  const inputClassName =
+    "rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-base text-zinc-900 outline-none focus:border-green-600 focus:bg-white";
+  const labelClassName = "flex flex-col gap-1.5 text-left text-sm font-medium text-zinc-700";
+
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-3">
-      <label className="flex flex-col gap-1 text-left text-sm">
+    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-3.5">
+      <label className={labelClassName}>
         {t("nameLabel")}
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded border px-3 py-2 text-base"
-        />
+        <input value={name} onChange={(e) => setName(e.target.value)} className={inputClassName} />
       </label>
-      <label className="flex flex-col gap-1 text-left text-sm">
+      <label className={labelClassName}>
         {t("categoryLabel")}
         <input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded border px-3 py-2 text-base"
+          className={inputClassName}
         />
       </label>
-      <label className="flex flex-col gap-1 text-left text-sm">
+      <label className={labelClassName}>
         {t("barcodeLabel")}
         <input
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}
           inputMode="numeric"
-          className="rounded border px-3 py-2 text-base"
+          className={inputClassName}
         />
       </label>
-      <label className="flex flex-col gap-1 text-left text-sm">
+      <label className={labelClassName}>
         {t("priceLabel")}
         <input
           value={priceKES}
           onChange={(e) => setPriceKES(e.target.value)}
           inputMode="numeric"
-          className="rounded border px-3 py-2 text-base"
+          className={inputClassName}
         />
       </label>
-      <label className="flex flex-col gap-1 text-left text-sm">
+      <label className={labelClassName}>
         {t("stockLabel")}
         <input
           value={stockQty}
           onChange={(e) => setStockQty(e.target.value)}
           inputMode="numeric"
-          className="rounded border px-3 py-2 text-base"
+          className={inputClassName}
         />
+      </label>
+      <label className="flex items-center gap-2.5 text-left text-sm font-medium text-zinc-700">
+        <input
+          type="checkbox"
+          checked={available}
+          onChange={(e) => setAvailable(e.target.checked)}
+          className="h-4 w-4 rounded border-zinc-300 text-green-600 focus:ring-green-600"
+        />
+        {t("availableLabel")}
       </label>
       {error && (
         <p role="alert" className="text-sm text-red-600">
@@ -137,7 +149,7 @@ export function ProductForm({ mode, initialValues, onSubmit }: ProductFormProps)
       )}
       <button
         type="submit"
-        className="rounded bg-zinc-900 py-2 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+        className="mt-1 rounded-2xl bg-green-600 py-3.5 text-base font-medium text-white transition-colors hover:bg-green-500"
       >
         {mode === "create" ? t("saveButton") : t("saveChangesButton")}
       </button>

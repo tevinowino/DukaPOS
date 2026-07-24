@@ -15,6 +15,7 @@ const messages = {
     priceInvalid: "Enter a valid price (whole KES, 0 or more)",
     stockInvalid: "Enter a valid stock quantity (whole number, 0 or more)",
     barcodeInvalid: "Barcode should be numbers only",
+    availableLabel: "Available for sale",
     saveButton: "Save product",
     saveChangesButton: "Save changes",
   },
@@ -46,7 +47,23 @@ describe("ProductForm", () => {
       barcode: undefined,
       priceKES: 320,
       stockQty: 15,
+      available: true,
     });
+  });
+
+  it("defaults Available for sale to checked, and submits false when unchecked", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    expect(screen.getByRole("checkbox", { name: "Available for sale" })).toBeChecked();
+
+    await user.type(screen.getByLabelText("Product name"), "Cooking Oil 1L");
+    await user.type(screen.getByLabelText("Price (KES)"), "320");
+    await user.type(screen.getByLabelText("Stock quantity"), "15");
+    await user.click(screen.getByRole("checkbox", { name: "Available for sale" }));
+    await user.click(screen.getByRole("button", { name: "Save product" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ available: false }));
   });
 
   it("shows a validation error and does not submit when priceKES is negative", async () => {
@@ -92,5 +109,20 @@ describe("ProductForm", () => {
     expect(screen.getByLabelText("Price (KES)")).toHaveValue("150");
     expect(screen.getByLabelText("Stock quantity")).toHaveValue("20");
     expect(screen.getByRole("button", { name: "Save changes" })).toBeInTheDocument();
+  });
+
+  it("pre-fills Available for sale as unchecked when initialValues.available is false", () => {
+    renderForm({
+      mode: "edit",
+      initialValues: {
+        name: "Sugar 1kg",
+        category: "Groceries",
+        priceKES: 150,
+        stockQty: 0,
+        available: false,
+      },
+    });
+
+    expect(screen.getByRole("checkbox", { name: "Available for sale" })).not.toBeChecked();
   });
 });

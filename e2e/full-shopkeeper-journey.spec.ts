@@ -122,7 +122,9 @@ test("a full shopkeeper day: onboard, stock the shop three ways, sell two ways, 
   await test.step("record a cash sale", async () => {
     await page.getByRole("link", { name: "← Home" }).click();
     await page.getByRole("link", { name: "New sale" }).click();
-    await page.getByRole("button", { name: "Add product" }).click();
+    // New sale defaults to the Barcode tab (no camera in CI) — switch to
+    // the Search tab, same fallback proven above for the barcode add-product flow.
+    await page.getByRole("button", { name: "Search", exact: true }).click();
     await page.getByText("Sugar 1kg").click();
     await page.getByRole("button", { name: "Confirm sale" }).click();
     await expect(page.getByRole("heading", { name: "Sales" })).toBeVisible();
@@ -154,7 +156,9 @@ test("a full shopkeeper day: onboard, stock the shop three ways, sell two ways, 
     });
 
     await page.getByRole("link", { name: "New sale" }).click();
-    await page.getByRole("button", { name: "Add product" }).click();
+    // New sale defaults to the Barcode tab (no camera in CI) — switch to
+    // the Search tab, same fallback proven above for the barcode add-product flow.
+    await page.getByRole("button", { name: "Search", exact: true }).click();
     await page.getByText("Rice 2kg").click();
     await page.getByRole("button", { name: "M-Pesa" }).click();
     await page.getByRole("button", { name: "Pay with M-Pesa" }).click();

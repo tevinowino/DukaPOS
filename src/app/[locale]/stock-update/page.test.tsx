@@ -7,6 +7,10 @@ import { addProduct } from "@/lib/db/products";
 import * as productsModule from "@/lib/db/products";
 import StockUpdatePage from "./page";
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/stock-update",
+}));
+
 const messages = {
   stockUpdate: {
     title: "Update stock",
@@ -24,6 +28,12 @@ const messages = {
     applyButton: "Apply {count} changes",
     applySuccess: "Updated {count} products.",
     lineApplyFailed: "Couldn't update {name} — it may have been deleted",
+    offlineMessage: "Reading updates needs a connection — we'll try again once you're back online",
+  },
+  bottomNav: {
+    sales: "Sales",
+    inventory: "Inventory",
+    reports: "Reports",
   },
 };
 

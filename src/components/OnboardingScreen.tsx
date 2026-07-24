@@ -5,6 +5,9 @@ import { useTranslations } from "next-intl";
 import { normalizePhone } from "@/lib/identity/normalizePhone";
 import { createShopProfile } from "@/lib/identity/shopIdentity";
 import { PinPad } from "./PinPad";
+import { Card } from "./ui/Card";
+import { Screen } from "./ui/Screen";
+import { buttonStyles } from "./ui/button";
 
 type Step = "details" | "setPin" | "confirmPin";
 
@@ -12,7 +15,9 @@ type Step = "details" | "setPin" | "confirmPin";
  * First-launch flow: shop name + phone, then set PIN, then confirm PIN.
  * One component owning all three steps as local state (global-rules §2:
  * no temporal decomposition into separately-callable step functions) —
- * `createShopProfile` is called exactly once, at the end.
+ * `createShopProfile` is called exactly once, at the end. Every step
+ * shares the same light-card-on-dark-chrome look as `LockScreen`, since
+ * this is the same "getting into the app" moment for a first-time user.
  */
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const t = useTranslations("onboarding");
@@ -69,64 +74,64 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
 
   if (step === "details") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <form
-          onSubmit={handleDetailsSubmit}
-          className="flex w-full max-w-sm flex-col gap-3"
-        >
-          <label className="flex flex-col gap-1 text-left text-sm">
-            {t("shopNameLabel")}
-            <input
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              className="rounded border px-3 py-2 text-base"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-left text-sm">
-            {t("phoneLabel")}
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              inputMode="tel"
-              className="rounded border px-3 py-2 text-base"
-            />
-          </label>
-          {detailsError && (
-            <p role="alert" className="text-sm text-red-600">
-              {detailsError}
-            </p>
-          )}
-          <button
-            type="submit"
-            className="rounded bg-zinc-900 py-2 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            {t("continueButton")}
-          </button>
-        </form>
-      </main>
+      <Screen size="narrow" className="items-center justify-center">
+        <Card variant="light" className="w-full px-6 py-10">
+          <h1 className="mb-6 text-center text-2xl font-semibold text-zinc-900">{t("title")}</h1>
+          <form onSubmit={handleDetailsSubmit} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1.5 text-left text-sm font-medium text-zinc-700">
+              {t("shopNameLabel")}
+              <input
+                value={shopName}
+                onChange={(e) => setShopName(e.target.value)}
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-base text-zinc-900 outline-none focus:border-green-600 focus:bg-white"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-left text-sm font-medium text-zinc-700">
+              {t("phoneLabel")}
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                inputMode="tel"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-base text-zinc-900 outline-none focus:border-green-600 focus:bg-white"
+              />
+            </label>
+            {detailsError && (
+              <p role="alert" className="text-sm text-red-600">
+                {detailsError}
+              </p>
+            )}
+            <button type="submit" className={buttonStyles("primary", "lg", "mt-2 w-full")}>
+              {t("continueButton")}
+            </button>
+          </form>
+        </Card>
+      </Screen>
     );
   }
 
   if (step === "setPin") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
-        <h1 className="text-2xl font-semibold">{t("setPinTitle")}</h1>
-        {pinError && (
-          <p role="alert" className="text-sm text-red-600">
-            {pinError}
-          </p>
-        )}
-        <PinPad onComplete={handleFirstPin} />
-      </main>
+      <Screen size="narrow" className="items-center justify-center">
+        <Card variant="light" className="w-full px-6 py-10 text-center">
+          <h1 className="mb-6 text-2xl font-semibold text-zinc-900">{t("setPinTitle")}</h1>
+          {pinError && (
+            <p role="alert" className="mb-4 text-sm text-red-600">
+              {pinError}
+            </p>
+          )}
+          <PinPad onComplete={handleFirstPin} />
+        </Card>
+      </Screen>
     );
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-2xl font-semibold">{t("confirmPinTitle")}</h1>
-      <PinPad onComplete={handleConfirmPin} />
-      {submitting && <p className="text-sm text-zinc-500">{t("saving")}</p>}
-    </main>
+    <Screen size="narrow" className="items-center justify-center">
+      <Card variant="light" className="w-full px-6 py-10 text-center">
+        <h1 className="mb-6 text-2xl font-semibold text-zinc-900">{t("confirmPinTitle")}</h1>
+        <PinPad onComplete={handleConfirmPin} />
+        {submitting && <p className="mt-4 text-sm text-zinc-500">{t("saving")}</p>}
+      </Card>
+    </Screen>
   );
 }

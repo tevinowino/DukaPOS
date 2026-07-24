@@ -35,7 +35,8 @@ test("record a cash sale, see stock reduced, and see it in the transaction log",
   await page.getByRole("link", { name: "← Home" }).click();
   await page.getByRole("link", { name: "New sale" }).click();
 
-  await page.getByRole("button", { name: "Add product" }).click();
+  // New sale defaults to the Barcode tab (no camera in CI) — switch to the Search tab.
+  await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.getByText("Sugar 1kg").click();
   await page.getByLabel("Quantity for Sugar 1kg").fill("3");
   await expect(page.getByText("Total: KES 300")).toBeVisible();
@@ -45,7 +46,11 @@ test("record a cash sale, see stock reduced, and see it in the transaction log",
   // recordCashSale redirects to /transactions on success.
   await expect(page).toHaveURL(/\/transactions$/);
   await expect(page.getByText("Sugar 1kg × 3")).toBeVisible();
-  await expect(page.getByText("KES 300")).toBeVisible();
+  // "KES 300" now also appears in the day's payment-breakdown card (cash
+  // total and grand total), alongside this specific sale's own total —
+  // `.first()` avoids a strict-mode multi-match, and any one of the three
+  // is equally good evidence the 300 total was computed correctly.
+  await expect(page.getByText("KES 300").first()).toBeVisible();
 
   await page.getByRole("link", { name: "← Home" }).click();
   await page.getByRole("link", { name: "View stock" }).click();

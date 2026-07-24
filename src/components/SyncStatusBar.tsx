@@ -40,9 +40,9 @@ export function SyncStatusBar({
             : t("idle");
 
   return (
-    <div className="flex items-center justify-between border-b bg-zinc-50 px-4 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+    <div className="flex items-center justify-between border-b border-zinc-900 bg-zinc-950 px-4 py-1.5 text-xs text-zinc-500">
       <span>{label}</span>
-      <button type="button" onClick={() => syncNow()} className="underline">
+      <button type="button" onClick={() => syncNow()} className="text-zinc-400 underline underline-offset-2">
         {t("syncNowButton")}
       </button>
     </div>

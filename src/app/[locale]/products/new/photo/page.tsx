@@ -4,11 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { CheckCircle2 } from "lucide-react";
 import { addProduct } from "@/lib/db/products";
 import { useOnlineSync } from "@/lib/sync/useOnlineSync";
 import type { ProductGuess } from "@/lib/ai/types";
 import { PhotoCapture } from "@/components/PhotoCapture";
 import { ProductForm, type ProductFormValues } from "@/components/ProductForm";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
 
 type View =
   | { step: "capture" }
@@ -62,52 +65,64 @@ export default function PhotoProductPage() {
 
   if (view.step === "capture") {
     return (
-      <main className="flex flex-1 flex-col items-center gap-4 p-4">
-        <Link href="/products/new" className="self-start text-sm underline">
+      <Screen size="narrow" className="items-center">
+        <Link
+          href="/products/new"
+          className="self-start text-sm text-zinc-400 underline underline-offset-2"
+        >
           {t("backToAddProduct")}
         </Link>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <h1 className="text-2xl font-semibold text-white">{t("title")}</h1>
         {!isOnline && (
-          <p role="alert" className="text-sm text-amber-600">
+          <p role="alert" className="text-sm text-amber-400">
             {t("offlineMessage")}
           </p>
         )}
         <PhotoCapture onCapture={handleCapture} />
-      </main>
+      </Screen>
     );
   }
 
   if (view.step === "identifying") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p className="text-sm text-zinc-500">{t("identifying")}</p>
-      </main>
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <p className="text-sm text-zinc-400">{t("identifying")}</p>
+      </Screen>
     );
   }
 
   if (view.step === "failed") {
     return (
-      <main className="flex flex-1 flex-col items-center gap-4 p-4">
-        <p role="alert" className="text-sm text-red-600">
+      <Screen size="narrow" className="items-center">
+        <p role="alert" className="text-sm text-red-400">
           {view.message}
         </p>
-        <ProductForm mode="create" onSubmit={handleSubmit} />
-      </main>
+        <Card variant="light" className="w-full px-6 py-8">
+          <ProductForm mode="create" onSubmit={handleSubmit} />
+        </Card>
+      </Screen>
     );
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{t("confirmTitle")}</h1>
-      <ProductForm
-        mode="create"
-        initialValues={{
-          name: view.guess.name,
-          category: view.guess.category,
-          priceKES: view.guess.estimatedPriceKES,
-        }}
-        onSubmit={handleSubmit}
-      />
-    </main>
+    <Screen size="narrow" className="items-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 text-green-500">
+        <CheckCircle2 size={28} />
+      </span>
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold text-white">{t("confirmTitle")}</h1>
+      </div>
+      <Card variant="light" className="w-full px-6 py-8">
+        <ProductForm
+          mode="create"
+          initialValues={{
+            name: view.guess.name,
+            category: view.guess.category,
+            priceKES: view.guess.estimatedPriceKES,
+          }}
+          onSubmit={handleSubmit}
+        />
+      </Card>
+    </Screen>
   );
 }

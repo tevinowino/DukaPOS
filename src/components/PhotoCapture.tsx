@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Camera } from "lucide-react";
 import { compressImage } from "@/lib/media/compressImage";
 
 interface PhotoCaptureProps {
@@ -28,14 +29,17 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <label className="flex flex-col gap-1 text-center text-sm">
+      <label className="flex w-full max-w-sm cursor-pointer flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-zinc-700 px-6 py-10 text-center text-sm text-zinc-300 transition-colors hover:border-green-600">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600/15 text-green-500">
+          <Camera size={22} />
+        </span>
         {t("takePhotoLabel")}
         <input
           type="file"
           accept="image/*"
           capture="environment"
           onChange={handleChange}
-          className="w-full max-w-sm text-sm"
+          className="sr-only"
         />
       </label>
     </div>

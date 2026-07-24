@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 
 interface BarcodeScannerProps {
   onDetect: (barcode: string) => void;
@@ -13,8 +14,64 @@ type ScannerState = "starting" | "scanning" | "permissionDenied";
 
 const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"];
 
+/** Same set as `BARCODE_FORMATS`, in @zxing/library's own enum — see `scanWithZxing`'s hints for why this matters beyond just consistency. */
+const ZXING_FORMATS = [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E,
+  BarcodeFormat.CODE_128,
+  BarcodeFormat.CODE_39,
+  BarcodeFormat.QR_CODE,
+];
+
 /** Same code fired again within this window is treated as a held-steady read, not a new scan. */
 const REDETECT_COOLDOWN_MS = 2000;
+
+/**
+ * @zxing/library 0.23.0's `MultiFormatReader.decodeInternal` has a real
+ * bug (verified by reading its source): it only silences exceptions that
+ * are `instanceof ReaderException`, but `NotFoundException` and
+ * `ChecksumException` — the two exceptions thrown on every single frame
+ * where no barcode is found — both extend `Exception` directly, not
+ * `ReaderException`. So this exact `console.warn` fires continuously
+ * during completely normal scanning, not just on genuine failures, and
+ * makes a working scanner look broken. There's no public API to
+ * configure this away, so this suppresses only that one specific,
+ * verified-benign message while the zxing decode loop is running —
+ * every other `console.warn` call, from this component or anywhere else,
+ * passes through untouched.
+ */
+const ZXING_NOISY_WARNING_PREFIX = "MultiFormatReader: non-ReaderException from reader:";
+
+/**
+ * A camera's default single-shot autofocus (locked once at stream start)
+ * is often stale by the time a shopkeeper holds up their second or third
+ * item — this is a real contributor to "scanning is slow/unreliable" for
+ * close-up, small barcodes specifically. `focusMode` isn't in TypeScript's
+ * DOM lib yet, but is widely supported on Chrome/Android; every step here
+ * is defensive (`getCapabilities` may not exist, the device may not offer
+ * `"continuous"`, `applyConstraints` may reject) since this is a pure
+ * best-effort enhancement — a device that doesn't support it just keeps
+ * whatever focus behavior it already had.
+ */
+async function enableContinuousFocusIfSupported(stream: MediaStream): Promise<void> {
+  const track = stream.getVideoTracks()[0];
+  if (!track || typeof track.getCapabilities !== "function") {
+    return;
+  }
+  try {
+    const capabilities = track.getCapabilities() as MediaTrackCapabilities & { focusMode?: string[] };
+    if (!capabilities.focusMode?.includes("continuous")) {
+      return;
+    }
+    await track.applyConstraints({
+      advanced: [{ focusMode: "continuous" } as unknown as MediaTrackConstraintSet],
+    });
+  } catch {
+    // Best-effort only.
+  }
+}
 
 /**
  * Camera-based barcode scanner. One `getUserMedia` call acquires the
@@ -34,6 +91,7 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
     let stream: MediaStream | null = null;
     let rafId: number | null = null;
     let zxingControls: IScannerControls | null = null;
+    let restoreConsoleWarn: (() => void) | null = null;
 
     function handleDetectedCode(code: string) {
       const now = Date.now();
@@ -65,8 +123,36 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
     }
 
     async function scanWithZxing(video: HTMLVideoElement, mediaStream: MediaStream) {
+      const originalWarn = console.warn.bind(console);
+      console.warn = (...args: Parameters<typeof console.warn>) => {
+        if (typeof args[0] === "string" && args[0].startsWith(ZXING_NOISY_WARNING_PREFIX)) {
+          return;
+        }
+        originalWarn(...args);
+      };
+      restoreConsoleWarn = () => {
+        console.warn = originalWarn;
+      };
+
       const { BrowserMultiFormatReader } = await import("@zxing/browser");
-      const reader = new BrowserMultiFormatReader();
+      // Restricting to the same formats the native BarcodeDetector path
+      // uses isn't just for consistency: @zxing/library's default
+      // (unrestricted) MultiFormatReader tries every format it knows —
+      // including ones this app never uses, like Micro QR, Aztec, or PDF417
+      // — on every single video frame. Narrowing POSSIBLE_FORMATS means
+      // fewer decode attempts per frame (faster, more frames actually get
+      // analyzed per second) and fewer false-positive checksum failures
+      // from formats that were never going to match a retail barcode.
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, ZXING_FORMATS);
+      // Small/damaged/skewed barcodes (a real shopkeeper complaint) are
+      // exactly what TRY_HARDER exists for: it runs zxing's more thorough,
+      // slower per-frame decode passes instead of bailing after the first
+      // quick attempt. Restricting POSSIBLE_FORMATS above is what keeps
+      // this affordable — trying harder across only 7 formats, not zxing's
+      // full format list.
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      const reader = new BrowserMultiFormatReader(hints);
       const controls = await reader.decodeFromStream(mediaStream, video, (result) => {
         if (result) {
           handleDetectedCode(result.getText());
@@ -83,7 +169,16 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
       let mediaStream: MediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          // `ideal` (not `exact`/`min`) so devices that can't hit this
+          // resolution still fall back to their best available stream
+          // instead of getUserMedia rejecting outright. A sharper image
+          // gives both the native BarcodeDetector and the zxing fallback
+          // more resolvable detail per barcode — low-resolution defaults
+          // are a common real-world cause of unreliable detection, and
+          // small barcodes in particular need every pixel of detail this
+          // can get (bumped from 1280x720 after shopkeeper feedback that
+          // small barcodes were hard to read).
+          video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
         });
       } catch {
         if (!cancelled) {
@@ -97,6 +192,7 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
         return;
       }
       stream = mediaStream;
+      await enableContinuousFocusIfSupported(mediaStream);
 
       const video = videoRef.current;
       if (!video) {
@@ -125,19 +221,20 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
       }
       zxingControls?.stop();
       stream?.getTracks().forEach((track) => track.stop());
+      restoreConsoleWarn?.();
     };
   }, [onDetect]);
 
   if (state === "permissionDenied") {
     return (
       <div className="flex flex-col items-center gap-3 p-6 text-center">
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-red-400">
           {t("permissionDenied")}
         </p>
         <button
           type="button"
           onClick={onManualEntry}
-          className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+          className="rounded-2xl bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-500"
         >
           {t("enterManually")}
         </button>
@@ -146,10 +243,31 @@ export function BarcodeScanner({ onDetect, onManualEntry }: BarcodeScannerProps)
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <video ref={videoRef} muted playsInline className="w-full rounded bg-black" />
-      {state === "starting" && <p className="text-sm text-zinc-500">{t("starting")}</p>}
-      <button type="button" onClick={onManualEntry} className="text-sm underline">
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative w-full overflow-hidden rounded-3xl bg-black">
+        <video ref={videoRef} muted playsInline className="w-full" />
+        {/* Viewfinder corner brackets — purely decorative framing, no functional role. */}
+        <div className="pointer-events-none absolute inset-8 sm:inset-16">
+          {[
+            "top-0 left-0 border-t-4 border-l-4 rounded-tl-lg",
+            "top-0 right-0 border-t-4 border-r-4 rounded-tr-lg",
+            "bottom-0 left-0 border-b-4 border-l-4 rounded-bl-lg",
+            "bottom-0 right-0 border-b-4 border-r-4 rounded-br-lg",
+          ].map((corner) => (
+            <span key={corner} className={`absolute h-8 w-8 border-green-500 ${corner}`} />
+          ))}
+        </div>
+        {state === "starting" && (
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-zinc-300">
+            {t("starting")}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onManualEntry}
+        className="text-sm font-medium text-zinc-400 underline underline-offset-2"
+      >
         {t("enterManuallyInstead")}
       </button>
     </div>

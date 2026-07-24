@@ -1,7 +1,22 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { DecodeHintType, BarcodeFormat } from "@zxing/library";
 import { BarcodeScanner } from "./BarcodeScanner";
+
+const decodeFromStreamMock = vi.fn();
+const stopMock = vi.fn();
+
+vi.mock("@zxing/browser", () => ({
+  BrowserMultiFormatReader: vi.fn().mockImplementation(function (
+    this: { hints: unknown },
+    hints: unknown,
+  ) {
+    this.hints = hints;
+    // @ts-expect-error -- test double, not the real reader's prototype
+    this.decodeFromStream = decodeFromStreamMock;
+  }),
+}));
 
 const messages = {
   scanner: {
@@ -13,18 +28,122 @@ const messages = {
 };
 
 function renderScanner(onDetect = vi.fn(), onManualEntry = vi.fn()) {
-  render(
+  const { unmount } = render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <BarcodeScanner onDetect={onDetect} onManualEntry={onManualEntry} />
     </NextIntlClientProvider>,
   );
-  return { onDetect, onManualEntry };
+  return { onDetect, onManualEntry, unmount };
 }
 
 describe("BarcodeScanner", () => {
   afterEach(() => {
     // @ts-expect-error -- test-only cleanup of a property this suite defines
     delete navigator.mediaDevices;
+    // Not `vi.restoreAllMocks()`: that would also wipe the module-level
+    // `BrowserMultiFormatReader` mock's constructor implementation (set
+    // once, above, via `vi.mock`), breaking every test after the first.
+    // Clear call history on just the specific mocks each test cares about.
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockRestore();
+    vi.spyOn(console, "warn").mockRestore();
+    decodeFromStreamMock.mockClear();
+    stopMock.mockClear();
+  });
+
+  function mockSuccessfulCamera() {
+    // No `getCapabilities` (matches many real devices/browsers too) — the
+    // continuous-focus enhancement must no-op rather than throw when it's
+    // unavailable, which is exactly what this shape exercises.
+    const track = { stop: stopMock };
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [track],
+          getVideoTracks: () => [track],
+        }),
+      },
+      configurable: true,
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  }
+
+  it("restricts the zxing fallback reader to this app's retail barcode formats, and forwards a successful decode to onDetect", async () => {
+    mockSuccessfulCamera();
+    decodeFromStreamMock.mockResolvedValue({ stop: stopMock });
+    const { onDetect } = renderScanner();
+
+    await waitFor(() => expect(decodeFromStreamMock).toHaveBeenCalledTimes(1));
+
+    const [, , resultCallback] = decodeFromStreamMock.mock.calls[0];
+
+    const { BrowserMultiFormatReader } = await import("@zxing/browser");
+    const constructorHints = vi.mocked(BrowserMultiFormatReader).mock.calls[0][0] as Map<
+      DecodeHintType,
+      BarcodeFormat[]
+    >;
+    expect(constructorHints.get(DecodeHintType.POSSIBLE_FORMATS)).toEqual([
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.QR_CODE,
+    ]);
+    // TRY_HARDER trades some CPU for zxing's more thorough decode passes —
+    // real-world small/skewed barcodes often fail the fast-path attempt.
+    expect(constructorHints.get(DecodeHintType.TRY_HARDER)).toBe(true);
+
+    resultCallback({ getText: () => "6161100009999" });
+    expect(onDetect).toHaveBeenCalledWith("6161100009999");
+  });
+
+  it("switches the camera track to continuous autofocus when the device advertises support for it", async () => {
+    const applyConstraintsMock = vi.fn().mockResolvedValue(undefined);
+    const track = {
+      stop: stopMock,
+      getCapabilities: () => ({ focusMode: ["manual", "continuous"] }),
+      applyConstraints: applyConstraintsMock,
+    };
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [track],
+          getVideoTracks: () => [track],
+        }),
+      },
+      configurable: true,
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    decodeFromStreamMock.mockResolvedValue({ stop: stopMock });
+
+    renderScanner();
+
+    await waitFor(() =>
+      expect(applyConstraintsMock).toHaveBeenCalledWith({
+        advanced: [{ focusMode: "continuous" }],
+      }),
+    );
+  });
+
+  it("suppresses only @zxing/library's known-noisy per-frame warning while scanning, leaving other warnings untouched", async () => {
+    mockSuccessfulCamera();
+    decodeFromStreamMock.mockResolvedValue({ stop: stopMock });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { unmount } = renderScanner();
+
+    await waitFor(() => expect(decodeFromStreamMock).toHaveBeenCalledTimes(1));
+
+    console.warn("MultiFormatReader: non-ReaderException from reader:", new Error("NotFoundException"));
+    console.warn("some unrelated warning");
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith("some unrelated warning");
+
+    // Unmounting restores the original console.warn — no lingering global patch.
+    unmount();
+    console.warn("MultiFormatReader: non-ReaderException from reader:", new Error("after unmount"));
+    expect(warnSpy).toHaveBeenCalledTimes(2);
   });
 
   it("shows a permission-denied message and manual-entry affordance when getUserMedia rejects, without ever calling onDetect", async () => {

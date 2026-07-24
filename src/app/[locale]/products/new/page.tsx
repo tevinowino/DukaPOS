@@ -4,10 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { ScanBarcode, Camera, PenLine } from "lucide-react";
 import { addProduct, getProductByBarcode } from "@/lib/db/products";
 import type { Product } from "@/lib/db/schema";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { ProductForm, type ProductFormValues } from "@/components/ProductForm";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
+import { buttonStyles } from "@/components/ui/button";
 
 type View =
   | { step: "choose" }
@@ -32,76 +36,83 @@ export default function NewProductPage() {
 
   if (view.step === "choose") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-        <Link href="/products" className="self-start text-sm underline">
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <Link
+          href="/products"
+          className="self-start text-sm text-zinc-400 underline underline-offset-2"
+        >
           {t("backToStock")}
         </Link>
-        <h1 className="text-2xl font-semibold">{t("newTitle")}</h1>
+        <h1 className="text-2xl font-semibold text-white">{t("newTitle")}</h1>
         <button
           type="button"
           onClick={() => setView({ step: "scanning" })}
-          className="w-full max-w-sm rounded bg-zinc-900 py-3 text-base font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+          className={buttonStyles("primary", "lg", "w-full max-w-sm gap-2")}
         >
+          <ScanBarcode size={18} />
           {t("scanBarcodeButton")}
         </button>
         <Link
           href="/products/new/photo"
-          className="w-full max-w-sm rounded border py-3 text-center text-base font-medium"
+          className={buttonStyles("outline", "lg", "w-full max-w-sm gap-2")}
         >
+          <Camera size={18} />
           {t("addViaPhotoButton")}
         </Link>
         <button
           type="button"
           onClick={() => setView({ step: "form" })}
-          className="w-full max-w-sm rounded border py-3 text-base font-medium"
+          className={buttonStyles("outline", "lg", "w-full max-w-sm gap-2")}
         >
+          <PenLine size={18} />
           {t("addManuallyButton")}
         </button>
-      </main>
+      </Screen>
     );
   }
 
   if (view.step === "scanning") {
     return (
-      <main className="flex flex-1 flex-col gap-4 p-4">
-        <h1 className="text-2xl font-semibold">{t("newTitle")}</h1>
-        <BarcodeScanner
-          onDetect={handleDetect}
-          onManualEntry={() => setView({ step: "form" })}
-        />
-      </main>
+      <Screen size="narrow">
+        <h1 className="text-2xl font-semibold text-white">{t("newTitle")}</h1>
+        <BarcodeScanner onDetect={handleDetect} onManualEntry={() => setView({ step: "form" })} />
+      </Screen>
     );
   }
 
   if (view.step === "duplicateFound") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <p>{t("duplicateFoundBody", { name: view.product.name })}</p>
-        <Link
-          href={`/products/${view.product.id}/edit`}
-          className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          {t("duplicateFoundEditButton", { name: view.product.name })}
-        </Link>
-        <button
-          type="button"
-          onClick={() => setView({ step: "scanning" })}
-          className="text-sm underline"
-        >
-          {t("scanAgainButton")}
-        </button>
-      </main>
+      <Screen size="narrow" className="items-center justify-center text-center">
+        <Card variant="light" className="w-full px-6 py-10">
+          <p className="text-zinc-700">{t("duplicateFoundBody", { name: view.product.name })}</p>
+          <Link
+            href={`/products/${view.product.id}/edit`}
+            className={buttonStyles("primary", "lg", "mt-4 w-full")}
+          >
+            {t("duplicateFoundEditButton", { name: view.product.name })}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setView({ step: "scanning" })}
+            className="mt-3 text-sm text-zinc-500 underline underline-offset-2"
+          >
+            {t("scanAgainButton")}
+          </button>
+        </Card>
+      </Screen>
     );
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{t("newTitle")}</h1>
-      <ProductForm
-        mode="create"
-        initialValues={view.barcode ? { barcode: view.barcode } : undefined}
-        onSubmit={handleSubmit}
-      />
-    </main>
+    <Screen size="narrow" className="items-center">
+      <h1 className="text-2xl font-semibold text-white">{t("newTitle")}</h1>
+      <Card variant="light" className="w-full px-6 py-8">
+        <ProductForm
+          mode="create"
+          initialValues={view.barcode ? { barcode: view.barcode } : undefined}
+          onSubmit={handleSubmit}
+        />
+      </Card>
+    </Screen>
   );
 }

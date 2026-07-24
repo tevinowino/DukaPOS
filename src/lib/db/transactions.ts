@@ -89,6 +89,46 @@ export interface SaleGroup {
   lines: Transaction[];
 }
 
+export interface DailyRevenue {
+  /** Local midnight for this bucket. */
+  date: Date;
+  totalKES: number;
+}
+
+/**
+ * Sums completed-sale revenue per local day for the last `days` days
+ * (oldest first, today last) — one range query over the whole window,
+ * bucketed in memory, rather than one query per day. Powers the Sales
+ * dashboard's mini revenue chart.
+ */
+export async function getRecentDailyRevenue(
+  days: number,
+  referenceDate: Date = new Date(),
+): Promise<DailyRevenue[]> {
+  const today = startOfDay(referenceDate);
+  const windowStart = today - (days - 1) * 24 * 60 * 60 * 1000;
+  const windowEnd = today + 24 * 60 * 60 * 1000;
+
+  const transactions = await db.transactions
+    .where("createdAt")
+    .between(windowStart, windowEnd, true, false)
+    .toArray();
+
+  const buckets: DailyRevenue[] = Array.from({ length: days }, (_, i) => ({
+    date: new Date(windowStart + i * 24 * 60 * 60 * 1000),
+    totalKES: 0,
+  }));
+
+  for (const transaction of transactions) {
+    const bucketIndex = Math.floor((startOfDay(new Date(transaction.createdAt)) - windowStart) / (24 * 60 * 60 * 1000));
+    if (bucketIndex >= 0 && bucketIndex < days) {
+      buckets[bucketIndex].totalKES += transaction.totalKES;
+    }
+  }
+
+  return buckets;
+}
+
 /** Groups a flat list of `Transaction` rows by `saleGroupId`, newest first — pure presentation logic, no I/O. */
 export function groupTransactionsBySale(transactions: Transaction[]): SaleGroup[] {
   const groups = new Map<string, SaleGroup>();
@@ -109,4 +149,66 @@ export function groupTransactionsBySale(transactions: Transaction[]): SaleGroup[
   }
 
   return Array.from(groups.values()).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export interface PaymentMethodTotal {
+  totalKES: number;
+  count: number;
+}
+
+export interface PaymentBreakdown {
+  cash: PaymentMethodTotal;
+  mpesa: PaymentMethodTotal;
+  totalKES: number;
+}
+
+/**
+ * Sums completed-sale revenue by `paymentMethod` — pure presentation logic,
+ * no I/O. Pending and failed transactions (M-Pesa sales still awaiting the
+ * Paystack webhook, or ones that never completed) are excluded, matching
+ * every other revenue figure in this file (`getRecentDailyRevenue`,
+ * `recordCashSale`'s own totals).
+ */
+export function getPaymentBreakdown(transactions: Transaction[]): PaymentBreakdown {
+  const breakdown: PaymentBreakdown = {
+    cash: { totalKES: 0, count: 0 },
+    mpesa: { totalKES: 0, count: 0 },
+    totalKES: 0,
+  };
+
+  for (const transaction of transactions) {
+    if (transaction.status !== "completed") {
+      continue;
+    }
+    breakdown[transaction.paymentMethod].totalKES += transaction.totalKES;
+    breakdown[transaction.paymentMethod].count += 1;
+    breakdown.totalKES += transaction.totalKES;
+  }
+
+  return breakdown;
+}
+
+export interface TopMover {
+  productName: string;
+  quantity: number;
+}
+
+/**
+ * The product with the highest total quantity sold across the given
+ * transactions — pure presentation logic, no I/O. `null` for an empty
+ * list, never a zero-quantity placeholder. Ties break on whichever
+ * product name sorts first, for deterministic output.
+ */
+export function getTopMover(transactions: Transaction[]): TopMover | null {
+  const totals = new Map<string, number>();
+  for (const transaction of transactions) {
+    totals.set(transaction.productName, (totals.get(transaction.productName) ?? 0) + transaction.quantity);
+  }
+  if (totals.size === 0) {
+    return null;
+  }
+  const [productName, quantity] = Array.from(totals.entries()).sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  )[0];
+  return { productName, quantity };
 }

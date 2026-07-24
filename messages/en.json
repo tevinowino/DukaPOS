@@ -3,6 +3,11 @@
     "english": "EN",
     "swahili": "SW"
   },
+  "bottomNav": {
+    "sales": "Sales",
+    "inventory": "Inventory",
+    "reports": "Reports"
+  },
   "pinPad": {
     "digitsEntered": "{entered} of {length} digits entered",
     "backspace": "Backspace"
@@ -17,7 +22,15 @@
     "viewStockButton": "View stock",
     "viewSalesButton": "Sales log",
     "stockUpdateButton": "Update stock (text)",
-    "summaryButton": "Today's summary"
+    "summaryButton": "Today's summary",
+    "todaysSales": "Today's Sales",
+    "totalRevenue": "Total revenue",
+    "stockHealth": "Stock Health",
+    "stockGood": "Good",
+    "stockLow": "Low",
+    "stockOut": "Out",
+    "recentActivity": "Recent Activity",
+    "noSalesToday": "No sales recorded yet today."
   },
   "onboarding": {
     "title": "Set up your shop",
@@ -41,6 +54,27 @@
     "enterManually": "Enter manually",
     "enterManuallyInstead": "Enter manually instead"
   },
+  "scanSell": {
+    "modeBarcode": "Barcode",
+    "modePhoto": "Photo",
+    "modeSearch": "Search",
+    "addedMessage": "Added {name}",
+    "typeBarcodeButton": "Can't scan it? Type the number",
+    "manualBarcodeLabel": "Barcode number",
+    "manualBarcodeSubmit": "Look up",
+    "manualBarcodeInvalid": "Barcode should be numbers only",
+    "lookingUp": "Not in your stock yet — checking product databases…",
+    "identifyingPhoto": "Identifying the product…",
+    "foundTitle": "Found: {name}",
+    "newProductTitle": "New product — not in your stock yet",
+    "nameLabel": "Product name",
+    "priceLabel": "Selling price (KES)",
+    "priceFromPhotoHint": "Price read from the photo — check it's correct",
+    "nameRequired": "Enter a product name",
+    "priceInvalid": "Enter a valid price (whole KES, 0 or more)",
+    "addToSaleButton": "Add to sale",
+    "cancelButton": "Cancel"
+  },
   "products": {
     "title": "Stock",
     "backToHome": "← Home",
@@ -50,6 +84,12 @@
     "emptyBody": "Add your first product to get started.",
     "inStock": "{count} in stock",
     "outOfStock": "Out of stock",
+    "unavailableBadge": "Unavailable",
+    "searchPlaceholder": "Search inventory…",
+    "filterAll": "All",
+    "filterLowStock": "Low Stock",
+    "filterOutOfStock": "Out of Stock",
+    "noResultsFound": "No products match your search.",
     "newTitle": "Add product",
     "scanBarcodeButton": "Scan barcode",
     "addViaPhotoButton": "Add via photo",
@@ -73,13 +113,13 @@
     "priceInvalid": "Enter a valid price (whole KES, 0 or more)",
     "stockInvalid": "Enter a valid stock quantity (whole number, 0 or more)",
     "barcodeInvalid": "Barcode should be numbers only",
+    "availableLabel": "Available for sale",
     "saveButton": "Save product",
     "saveChangesButton": "Save changes"
   },
   "sell": {
     "title": "New sale",
     "backToHome": "← Home",
-    "addProductButton": "Add product",
     "searchPlaceholder": "Search products…",
     "quantityLabel": "Quantity for {name}",
     "removeButton": "Remove",
@@ -96,7 +136,10 @@
     "backToHome": "← Home",
     "prevDay": "← Previous",
     "nextDay": "Next →",
-    "emptyState": "No sales recorded for this day."
+    "emptyState": "No sales recorded for this day.",
+    "paymentBreakdownTitle": "By payment method",
+    "cashCount": "{count} cash sales",
+    "mpesaCount": "{count} M-Pesa sales"
   },
   "sync": {
     "offline": "Offline — changes will sync when you're back online",
@@ -142,7 +185,12 @@
     "regenerateButton": "Regenerate",
     "generating": "Generating summary…",
     "errorMessage": "Couldn't generate a summary right now — try again",
-    "offlineMessage": "Summaries need a connection — we'll try again once you're back online"
+    "offlineMessage": "Summaries need a connection — we'll try again once you're back online",
+    "totalSales": "Total Sales",
+    "vsYesterday": "{percent} from yesterday",
+    "topMover": "Top Mover",
+    "unitsSold": "{count} Units Sold",
+    "noSalesYet": "No sales yet today"
   },
   "mpesaCheckout": {
     "title": "Pay with M-Pesa",
